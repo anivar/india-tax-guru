@@ -13,9 +13,24 @@ npx skills add anivar/india-tax-guru
 ```
 
 Not a filing agent for the government e-filing portal, and not a substitute
-for a CA on complex returns — it's a computation engine you can trust because
-every rule is versioned per assessment year and every non-obvious edge case
-is documented in the module that handles it.
+for a CA. Rules are versioned per assessment year and non-obvious edge cases
+are documented in the module that handles them.
+
+> ## ⚠️ Alpha — known incorrect results
+>
+> v0.1.0 has **confirmed bugs that produce wrong rupee figures**. Do not rely
+> on it for an actual filing until these are fixed ([tracking issue](https://github.com/anivar/india-tax-guru/issues)):
+>
+> 1. **New regime wrongly allows self-occupied home-loan interest** (s.24(b)).
+>    A ₹2,00,000 interest claim reduces new-regime tax by ~₹41,600 when it
+>    should have no effect.
+> 2. **Surcharge marginal relief is broken above ₹50,00,000.** Post-tax income
+>    is non-monotonic: ₹52L gross nets *less* than ₹51L gross. Marginal relief
+>    exists precisely to prevent this.
+> 3. **Professional tax (s.16(iii)) is accepted as input but never deducted.**
+> 4. **TDS / advance tax is never netted off.** `total_tax_payable` is gross
+>    tax liability, *not* the amount payable after credits — no refund or
+>    balance-payable figure is produced.
 
 ## Features
 
