@@ -1,22 +1,29 @@
 name: Publish to PyPI
 
-# Trusted Publishing: authorize this workflow once at
-# https://pypi.org/manage/account/publishing/ (project: india-tax-guru,
-# owner: anivar, repo: india-tax-guru, workflow: publish.yml,
-# environment: pypi). No API token is stored anywhere.
+# Trusted Publishing: authorized at https://pypi.org/manage/account/publishing/
+# (project: india-tax-guru, owner: anivar, repo: india-tax-guru,
+# workflow: publish.yml, environment: pypi). No API token is stored anywhere.
+#
+# Actions are pinned to full commit SHAs: a moved tag on a third-party action
+# is exactly the supply-chain vector a release workflow must not have.
 
 on:
   release:
     types: [published]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@e4db8464a088ece1b920f60402e813ea4de65b8f # v4
       - run: uv build
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: dist
           path: dist/
@@ -28,8 +35,8 @@ jobs:
     permissions:
       id-token: write
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: dist
           path: dist/
-      - uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
