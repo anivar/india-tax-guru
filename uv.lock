@@ -27,21 +27,26 @@ wheels = [
 name = "india-tax-guru"
 version = "0.1.0"
 source = { editable = "." }
-dependencies = [
+
+[package.optional-dependencies]
+cli = [
     { name = "click" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "click" },
     { name = "pytest" },
     { name = "ruff" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "click", specifier = ">=8.1" }]
+requires-dist = [{ name = "click", marker = "extra == 'cli'", specifier = ">=8.1" }]
+provides-extras = ["cli"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "click", specifier = ">=8.1" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "ruff", specifier = ">=0.6" },
 ]

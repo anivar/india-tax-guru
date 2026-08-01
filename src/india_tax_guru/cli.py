@@ -1,5 +1,5 @@
-"""CLI entry point. Reads a JSON profile file (see docs/profile_schema.md) and
-runs regime comparison, or a CTC-optimization JSON input.
+"""CLI entry point. Reads a JSON profile (see docs/profile_schema.md) and runs a
+regime comparison, or a CTC-optimization input.
 """
 
 import json
@@ -16,9 +16,10 @@ from .models import (
     RentPeriod,
     SalaryComponent,
     SalaryIncome,
+    TaxesPaid,
     TaxpayerProfile,
 )
-from .regime import compare_regimes
+from .regime import RegimeResult, compare_regimes
 from .restructuring import CTCOptimizationInput, optimize_ctc_split
 from .rules import available_years, get_rules
 
@@ -35,17 +36,55 @@ def _profile_from_dict(d: dict) -> TaxpayerProfile:
         )
         for s in d.get("salaries", [])
     ]
-    house_properties = [HouseProperty(**h) for h in d.get("house_properties", [])]
-    capital_gains = [CapitalGainLot(**g) for g in d.get("capital_gains", [])]
     return TaxpayerProfile(
         assessment_year=d["assessment_year"],
         age_band=AgeBand(d.get("age_band", "below_60")),
+        is_resident=d.get("is_resident", True),
         salaries=salaries,
-        house_properties=house_properties,
-        capital_gains=capital_gains,
+        house_properties=[HouseProperty(**h) for h in d.get("house_properties", [])],
+        capital_gains=[CapitalGainLot(**g) for g in d.get("capital_gains", [])],
         other_income=OtherIncome(**d.get("other_income", {})),
         deductions=Deductions(**d.get("deductions", {})),
+        taxes_paid=TaxesPaid(**d.get("taxes_paid", {})),
     )
+
+
+def _print_regime(r: RegimeResult) -> None:
+    click.echo(f"\n[{r.regime.upper()} regime]")
+    rows = [
+        ("Gross salary", r.gross_salary),
+        ("Net salary (after s.16)", r.net_salary),
+        ("House property", r.house_property),
+        ("Other income", r.other_income),
+        ("Capital gains (slab rate)", r.slab_rate_capital_gains),
+        ("Gross total income", r.gross_total_income),
+        ("Deductions claimed", -r.deductions_claimed),
+        ("Capital gains (special rate)", r.special_rate_capital_gains),
+        ("TOTAL INCOME", r.total_income),
+        ("", None),
+        ("Tax on slab income", r.tax_on_slab_income),
+        ("Less: s.87A rebate", -r.rebate_87a),
+        ("Tax on special-rate income", r.tax_on_special_rate_income),
+        ("Surcharge", r.surcharge),
+        ("Cess", r.cess),
+        ("TOTAL TAX LIABILITY", r.total_tax_liability),
+    ]
+    if r.interest_234b or r.interest_234c:
+        rows += [("Interest u/s 234B", r.interest_234b), ("Interest u/s 234C", r.interest_234c)]
+    rows += [("Less: taxes already paid", -r.taxes_already_paid)]
+    if r.refund_due:
+        rows.append(("REFUND DUE", r.refund_due))
+    else:
+        rows.append(("BALANCE PAYABLE", r.balance_payable))
+
+    for label, value in rows:
+        if value is None:
+            click.echo()
+            continue
+        click.echo(f"  {label:<30}{value:>14,}")
+
+    for note in r.notes:
+        click.echo(f"  note: {note}")
 
 
 @click.group()
@@ -56,8 +95,8 @@ def main():
 @main.command("years")
 def years_cmd():
     """List supported assessment years."""
-    for y in available_years():
-        click.echo(y)
+    for year in available_years():
+        click.echo(year)
 
 
 @main.command("compare")
@@ -71,23 +110,19 @@ def compare_cmd(profile_json: str):
     result = compare_regimes(profile, rules)
 
     click.echo(f"AY {profile.assessment_year}")
-    for r in (result.old, result.new):
-        click.echo(f"\n[{r.regime.upper()} regime]")
-        click.echo(f"  Taxable salary:        {r.taxable_salary:>12,}")
-        click.echo(f"  House property net:    {r.house_property_net:>12,}")
-        click.echo(f"  Other income:          {r.other_income:>12,}")
-        click.echo(f"  Deductions claimed:    {r.deductions_claimed:>12,}")
-        click.echo(f"  Slab taxable income:   {r.slab_taxable_income:>12,}")
-        click.echo(f"  Tax on slab income:    {r.tax_on_slab_income:>12,}")
-        click.echo(f"  Tax on capital gains:  {r.tax_on_capital_gains:>12,}")
-        click.echo(f"  87A rebate applied:    {r.rebate_87a_applied:>12,}")
-        click.echo(f"  Surcharge:             {r.surcharge:>12,}")
-        click.echo(f"  Cess:                  {r.cess:>12,}")
-        click.echo(f"  TOTAL TAX PAYABLE:     {r.total_tax_payable:>12,}")
-        for n in r.deduction_notes:
-            click.echo(f"  note: {n}")
-
-    click.echo(f"\nRecommended: {result.recommended.upper()} regime (saves {result.savings:,})")
+    _print_regime(result.old)
+    _print_regime(result.new)
+    if result.savings:
+        click.echo(
+            f"\nRecommended: {result.recommended.upper()} regime "
+            f"(saves {result.savings:,})"
+        )
+    else:
+        click.echo(
+            f"\nRecommended: {result.recommended.upper()} regime "
+            "(identical tax either way; the new regime is the statutory default and "
+            "needs no opt-out filing)"
+        )
 
 
 @main.command("optimize-ctc")
@@ -107,9 +142,8 @@ def optimize_ctc_cmd(ctc_json: str, top: int):
         fixed_meal_voucher_exempt=data.get("fixed_meal_voucher_exempt", 26_400),
         fixed_lta_exempt=data.get("fixed_lta_exempt", 0),
     )
-    candidates = optimize_ctc_split(inp, rules)
-    for c in candidates[:top]:
-        click.echo(json.dumps(asdict(c), indent=2))
+    for candidate in optimize_ctc_split(inp, rules)[:top]:
+        click.echo(json.dumps(asdict(candidate), indent=2))
         click.echo("---")
 
 

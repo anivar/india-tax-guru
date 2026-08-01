@@ -1,26 +1,47 @@
 """AY 2025-26 (FY 2024-25) rules.
 
-Source: Finance Act 2024 (July 2024 Budget) — new regime slabs revised mid-year
-scheme, LTCG/STCG rates changed from 23 July 2024 (LTCG 10%->12.5%, STCG 15%->20%,
-equity LTCG exemption 1,00,000->1,25,000). This module uses the post-23-July rates
-for the full year as a simplification; a split-period computation for FY2024-25
-transactions before/after 23 July is NOT implemented — treat this AY as approximate.
+Source: Finance (No. 2) Act 2024 (July 2024 Budget) — new regime slabs revised and
+standard deduction raised to 75,000; s.87A rebate limit 7,00,000 / 25,000.
+
+KNOWN LIMITATION — capital gains: Finance (No. 2) Act 2024 changed capital-gains rates
+with effect from 23 July 2024 (s.112A 10% -> 12.5%, s.111A 15% -> 20%, s.112A exemption
+1,00,000 -> 1,25,000, and indexation withdrawn for most assets). FY 2024-25 therefore
+straddles two rate regimes and a correct return must split transactions by transfer
+date. This module applies the POST-23-July rates to the whole year and does NOT split.
+Capital-gains figures for AY 2025-26 are therefore WRONG for any transfer made on or
+before 22 July 2024. Salary/house-property/deduction figures are unaffected.
 
 VERIFY against CBDT before relying on this for an actual filing.
 """
 
 from .base import AssessmentYearRules, RegimeRules, SlabBracket, SurchargeBracket
 
+_OLD_SLABS_BELOW_60 = (
+    SlabBracket(upto=250_000, rate=0.0),
+    SlabBracket(upto=500_000, rate=0.05),
+    SlabBracket(upto=1_000_000, rate=0.20),
+    SlabBracket(upto=None, rate=0.30),
+)
+_OLD_SLABS_SENIOR = (
+    SlabBracket(upto=300_000, rate=0.0),
+    SlabBracket(upto=500_000, rate=0.05),
+    SlabBracket(upto=1_000_000, rate=0.20),
+    SlabBracket(upto=None, rate=0.30),
+)
+_OLD_SLABS_SUPER_SENIOR = (
+    SlabBracket(upto=500_000, rate=0.0),
+    SlabBracket(upto=1_000_000, rate=0.20),
+    SlabBracket(upto=None, rate=0.30),
+)
+
 OLD_REGIME = RegimeRules(
-    slabs=(
-        SlabBracket(upto=250_000, rate=0.0),
-        SlabBracket(upto=500_000, rate=0.05),
-        SlabBracket(upto=1_000_000, rate=0.20),
-        SlabBracket(upto=None, rate=0.30),
-    ),
+    slabs=_OLD_SLABS_BELOW_60,
+    slabs_senior=_OLD_SLABS_SENIOR,
+    slabs_super_senior=_OLD_SLABS_SUPER_SENIOR,
     standard_deduction=50_000,
     rebate_87a_income_limit=500_000,
     rebate_87a_max_amount=12_500,
+    rebate_87a_has_marginal_relief=False,
     surcharge=(
         SurchargeBracket(income_above=5_000_000, rate=0.10),
         SurchargeBracket(income_above=10_000_000, rate=0.15),
@@ -28,6 +49,11 @@ OLD_REGIME = RegimeRules(
         SurchargeBracket(income_above=50_000_000, rate=0.37),
     ),
     surcharge_cap_rate=0.37,
+    surcharge_special_income_cap_rate=0.15,
+    allows_professional_tax=True,
+    allows_hra_and_10_14=True,
+    allows_self_occupied_interest=True,
+    allows_house_property_loss_setoff=True,
     max_80ccd2_pct_of_salary=0.10,
     allowed_deductions=frozenset(
         {
@@ -40,8 +66,6 @@ OLD_REGIME = RegimeRules(
             "section_80g",
             "section_80ddb",
             "other_chapter_via",
-            "hra_exemption",
-            "home_loan_interest_self_occupied",
         }
     ),
 )
@@ -55,24 +79,32 @@ NEW_REGIME = RegimeRules(
         SlabBracket(upto=1_500_000, rate=0.20),
         SlabBracket(upto=None, rate=0.30),
     ),
+    slabs_senior=None,
+    slabs_super_senior=None,
     standard_deduction=75_000,
     rebate_87a_income_limit=700_000,
     rebate_87a_max_amount=25_000,
+    rebate_87a_has_marginal_relief=True,
     surcharge=(
         SurchargeBracket(income_above=5_000_000, rate=0.10),
         SurchargeBracket(income_above=10_000_000, rate=0.15),
         SurchargeBracket(income_above=20_000_000, rate=0.25),
     ),
     surcharge_cap_rate=0.25,
+    surcharge_special_income_cap_rate=0.15,
+    allows_professional_tax=False,
+    allows_hra_and_10_14=False,
+    allows_self_occupied_interest=False,
+    allows_house_property_loss_setoff=False,
     max_80ccd2_pct_of_salary=0.14,
-    allowed_deductions=frozenset({"section_80ccd_2_employer_nps"}),
+    allowed_deductions=frozenset(),
 )
 
 RULES = AssessmentYearRules(
     assessment_year="2025-26",
     old_regime=OLD_REGIME,
     new_regime=NEW_REGIME,
-    ltcg_112a_exemption=1_250_000,
+    ltcg_112a_exemption=125_000,
     ltcg_112a_rate=0.125,
     stcg_111a_rate=0.20,
     ltcg_other_rate=0.125,
@@ -82,8 +114,12 @@ RULES = AssessmentYearRules(
     section_80d_self_family_cap_senior=50_000,
     section_80d_parents_cap=25_000,
     section_80d_parents_cap_senior=50_000,
+    section_80ddb_cap=40_000,
+    section_80ddb_cap_senior=100_000,
     section_80tta_cap=10_000,
     section_80ttb_cap=50_000,
+    section_80g_qualifying_pct_of_gti=0.10,
+    self_occupied_interest_cap=200_000,
     house_property_loss_setoff_cap=200_000,
     rounding_unit=10,
 )

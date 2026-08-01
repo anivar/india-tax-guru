@@ -54,16 +54,25 @@ def test_irregular_months_summed_not_assumed_uniform():
 
 
 def test_reconcile_flags_material_discrepancy():
+    """One month of 50,000 against a Form 16 gross of 800,000 is a 750,000 gap."""
     slips = [
         MonthlySlip(month="2025-04", line_items=[PayslipLineItem(name="Basic", amount=50_000)])
     ]
     analysis = analyze_payslips(slips)
     note = reconcile_against_form16(analysis, form16_gross_salary=800_000)
     assert note is not None
-    assert (
-        "750,000" not in note
-    )  # sanity: just checking it doesn't crash formatting; real check below
+    assert "750000" in note, "the note must state the actual gap"
     assert "higher" in note
+
+
+def test_reconcile_flags_discrepancy_in_the_other_direction():
+    slips = [
+        MonthlySlip(month="2025-04", line_items=[PayslipLineItem(name="Basic", amount=900_000)])
+    ]
+    analysis = analyze_payslips(slips)
+    note = reconcile_against_form16(analysis, form16_gross_salary=800_000)
+    assert note is not None
+    assert "lower" in note
 
 
 def test_reconcile_no_note_when_close():
