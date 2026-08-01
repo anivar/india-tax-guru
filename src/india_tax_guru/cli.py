@@ -7,6 +7,7 @@ from dataclasses import asdict
 
 import click
 
+from .advisory import analyse_salary_structure
 from .models import (
     AgeBand,
     CapitalGainLot,
@@ -123,6 +124,40 @@ def compare_cmd(profile_json: str):
             "(identical tax either way; the new regime is the statutory default and "
             "needs no opt-out filing)"
         )
+
+
+@main.command("advise")
+@click.argument("profile_json", type=click.Path(exists=True))
+def advise_cmd(profile_json: str):
+    """Expert salary-structure advice: what to change and what each change is worth."""
+    with open(profile_json) as f:
+        data = json.load(f)
+    profile = _profile_from_dict(data)
+    rules = get_rules(profile.assessment_year)
+    advice = analyse_salary_structure(profile, rules)
+
+    click.echo(f"AY {profile.assessment_year}")
+    click.echo(f"\nRecommended regime : {advice.recommended_regime.upper()}")
+    click.echo(f"Tax as things stand: {advice.baseline_tax:>14,}")
+    click.echo(f"Tax if all applied : {advice.optimised_tax:>14,}")
+    click.echo(f"Total opportunity  : {advice.combined_saving:>14,}")
+
+    if advice.recommendations:
+        click.echo("\nRecommendations (savings are measured individually and do not add up):")
+        for rec in sorted(advice.recommendations, key=lambda r: -r.annual_tax_saving):
+            flags = []
+            if rec.requires_employer_action:
+                flags.append("needs employer")
+            if rec.reduces_take_home_cash:
+                flags.append("locks up cash")
+            suffix = f"  [{', '.join(flags)}]" if flags else ""
+            click.echo(f"\n  [{rec.category}] {rec.action}{suffix}")
+            if rec.annual_tax_saving:
+                click.echo(f"      worth {rec.annual_tax_saving:,} a year")
+            click.echo(f"      {rec.rationale}")
+
+    for warning in advice.warnings:
+        click.echo(f"\n  warning: {warning}")
 
 
 @main.command("optimize-ctc")
