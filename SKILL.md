@@ -90,6 +90,14 @@ and report any figure that two documents disagree on rather than silently pickin
   (`presumptive.py`) and flow into the computation as business income; actual
   (books-based) business profits and the tax-audit machinery are not — say so rather
   than guessing at rules this repo doesn't implement.
+- **GST-registered presumptive filers: reconcile before computing.** Turnover fed to
+  `compute_44ad`/`compute_44ada` must be GST-EXCLUSIVE. Run
+  `gst.reconcile_gst_turnover(itr_turnover, gstr_taxable_value, gst_collected)`
+  first and relay its warnings verbatim. Two traps to explain, never "fix": a
+  GST-inclusive turnover overpays tax while producing a clean-looking AIS match, so
+  do not inflate the ITR figure to make an AIS mismatch disappear; and an ITR figure
+  below the GSTR taxable value is the e-verification pattern, so the gap needs a
+  documented reason (capital-asset sale in GSTR, branch transfer) before filing.
 - This tool does not file returns or talk to the e-filing portal. It produces numbers
   and recommendations for the user (or another tool) to act on.
 - If the assessment year requested has no rules module in

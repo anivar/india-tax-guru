@@ -41,6 +41,12 @@ are documented in the module that handles them.
   only to the digitally-received slice of turnover, 8% to the rest — it is not an
   alternative rate on the whole), the ₹3 crore / ₹75 lakh enhanced caps and their 5%
   cash test, the s.44AD(4) lock-in, and the single 15 March advance-tax instalment.
+- **GST-turnover reconciliation** — for a GST-registered presumptive filer, the ITR
+  turnover is reconciled against the GSTR taxable value the way the AIS cross-match
+  does it, and the two *silent* failure modes are named: a GST-inclusive turnover
+  (which overpays tax while producing a clean-looking AIS match) and an
+  under-reported one (which files clean and surfaces as an e-verification notice).
+  Exempt, non-GST and pre-registration receipts are declared, not guessed.
 - **House property** — s.24(b) and s.71(3A) caps applied in *aggregate* across
   properties, let-out NAV/30%/interest, carry-forward reported not dropped.
 - **Surcharge** — thresholds, the new regime's 25% ceiling, the **15% cap on

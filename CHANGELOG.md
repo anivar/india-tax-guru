@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **GST-turnover reconciliation for presumptive filers** (`gst.py`). Classifies the
+  ITR-vs-GSTR relationship the way the AIS cross-match does: matched (with declared
+  exempt/non-GST/pre-registration receipts), GST-inclusive turnover (the
+  copy-the-invoice-total error — overstates presumptive income by the tax collected,
+  yet produces a clean AIS match), under-reported (the e-verification pattern), or
+  unexplained excess. The s.44AD/44ADA docstrings now state the GST-exclusive
+  turnover convention explicitly.
+
 - **HUF assessees supported.** The individual machinery minus the individual-only
   reliefs: no s.87A rebate (including its new-regime marginal relief), no age-based
   basic exemption, no salary heads (and so no s.16 standard deduction or HRA), no

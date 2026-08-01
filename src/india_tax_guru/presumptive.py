@@ -151,6 +151,12 @@ def compute_44ad(
     another prescribed electronic mode, whether during the year or before the s.139(1)
     due date. `cash_receipts` includes non-account-payee cheques and drafts, which the
     second proviso deems to be cash for the enhanced-threshold test.
+
+    For a GST-registered filer, `turnover` (and the receipt split) must be EXCLUSIVE
+    of GST: tax collected on outward supplies is a liability held for the government,
+    not turnover, and feeding a GST-inclusive figure both overstates presumptive
+    income and can flip the cap test near the threshold. Reconcile against the GSTR
+    figures with `gst.reconcile_gst_turnover` before computing.
     """
     _assert_eligible_assessee(assessee_type)
     if not is_resident:
@@ -255,6 +261,10 @@ def compute_44ada(
 
     Unlike s.44AD there is no split rate and no five-year lock-in; the cash-receipt test
     governs only the enhanced receipts cap.
+
+    As with s.44AD, `gross_receipts` must be EXCLUSIVE of GST for a registered
+    professional — at 50%, counting the tax collected as receipts overstates income
+    by half the GST component. See `gst.reconcile_gst_turnover`.
     """
     _assert_eligible_assessee_44ada(assessee_type)
     if not is_resident:
