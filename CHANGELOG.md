@@ -1,6 +1,47 @@
 # Changelog
 
-## Unreleased
+## v0.2.0
+
+Extends the engine beyond the salaried individual: presumptive business income,
+foreign-listed equity, HUF assessees, and GST reconciliation — plus two classes
+of correctness fixes, each of the silently-wrong kind this project exists to
+refuse.
+
+- **Presumptive taxation under s.44AD and s.44ADA**, wired into the computation
+  as business income. Models the split rate (6% only on the digitally-received
+  slice of turnover, 8% on the rest), the receipt deadline running to the
+  s.139(1) due date, non-account-payee instruments deemed cash for the enhanced
+  ₹3 crore / ₹75 lakh cap test, the turnover cap sitting inside the
+  eligible-business definition (breach removes the section, not just the
+  relief), the s.44AD(4) lock-in, and the single 15 March advance-tax
+  instalment under s.211(1)(b).
+- **Foreign-listed equity as its own asset class.** A US-listed RSU is not a
+  s.112A asset: no STT, not a recognised Indian exchange — so no ₹1,25,000
+  exemption, no concessional rate, and a 24-month long-term threshold. Holding
+  period is derived from acquisition and transfer dates where both are given,
+  rather than trusting the caller's flag.
+- **HUF assessees supported.** The individual machinery minus the individual-only
+  reliefs: no s.87A rebate (including its new-regime marginal relief), no age-based
+  basic exemption, no salary heads (and so no s.16 standard deduction or HRA), no
+  80CCD(1B) or 80E. What remains applies unchanged: slabs, surcharge, cess, 80C,
+  80D, 80TTA at its ₹10,000 cap, 80DDB, 80G, s.44AD, and the s.115BAC regime choice
+  with Form 10-IEA. Illegal HUF inputs are rejected at construction.
+- **GST-turnover reconciliation for presumptive filers** (`gst.py`). Classifies the
+  ITR-vs-GSTR relationship the way the AIS cross-match does: matched (with declared
+  exempt/non-GST/pre-registration receipts), GST-inclusive turnover (the
+  copy-the-invoice-total error — overstates presumptive income by the tax collected,
+  yet produces a clean AIS match), under-reported (the e-verification pattern), or
+  unexplained excess. The s.44AD/44ADA docstrings now state the GST-exclusive
+  turnover convention explicitly.
+- **Fixed: residency-conditioned reliefs were granted to non-residents.** The
+  s.87A rebate and the raised basic exemption at 60 and 80 are resident-only;
+  the engine was wiping out real non-resident liabilities on age or income
+  alone. An external golden corpus of hand-verified scenarios now pins these.
+- **Fixed: s.44ADA wrongly admitted an HUF.** The eligibility test was shared with
+  s.44AD, but Finance Act 2021 confined s.44ADA to a resident individual or
+  partnership firm (not an LLP) from AY 2021-22 — an HUF-run profession would have
+  been granted the 50% presumptive rate it lost. The advisory's 80CCD(1B) lever is
+  likewise now individual-only.
 
 - **GST-turnover reconciliation for presumptive filers** (`gst.py`). Classifies the
   ITR-vs-GSTR relationship the way the AIS cross-match does: matched (with declared
@@ -46,10 +87,6 @@ Supports AY 2025-26 and AY 2026-27.
   capped, regime-gated, bounded by gross total income.
 - Settlement: TDS, advance tax and self-assessment tax netted to a refund or
   balance-payable figure, with s.234B/234C interest.
-- Foreign-listed equity as its own asset class: no s.112A exemption, no
-  concessional rate, 24-month long-term threshold.
-- Presumptive taxation under s.44AD and s.44ADA, wired into the computation as
-  business income.
 - s.288A/288B rounding to the nearest ₹10, halves up.
 
 ### Advice and compliance
