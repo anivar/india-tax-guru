@@ -26,11 +26,40 @@ Supports AY 2025-26 and AY 2026-27.
   balance-payable figure, with s.234B/234C interest.
 - s.288A/288B rounding to the nearest ₹10, halves up.
 
+### Advice and compliance
+
+- Salary-structure advisory: employer-NPS headroom, HRA sized to the rent
+  actually paid, and Chapter VI-A headroom. Every saving is measured by running
+  the counterfactual through the same engine, never estimated from a marginal
+  rate. Levers are reported individually and applied cumulatively, since they
+  overlap and are not additive.
+- Regime-choice compliance. Form 10-IEA is surfaced only where the return has
+  business or professional income — a salaried ITR-1/ITR-2 filer must not file
+  it. What they get instead is the deadline that actually binds them: the old
+  regime exists only in a return furnished under s.139(1), so a belated return
+  under s.139(4) forfeits it. Due dates are table-driven per assessment year,
+  because CBDT moves them by circular.
+
 ### Tooling
 
-- `itg compare` and `itg optimize-ctc`.
+- `itg compare`, `itg advise` and `itg optimize-ctc`.
 - CTC restructuring optimizer across both regimes.
-- Payslip classification and Form 16 reconciliation.
+- Payslip classification, Form 16 reconciliation, and a bridge from analysed
+  payslips into the engine.
 - `SKILL.md` for Claude Code, `AGENTS.md` for other agents.
 - Core is dependency-free; `click` is an optional `cli` extra, so the engine
   runs under Pyodide in a browser.
+
+### Verification
+
+158 tests. Eight canonical scenarios were computed three times each,
+independently of this codebase and from the statute, using different
+approaches; a figure was accepted only on majority agreement. All eight agreed,
+seven unanimously, and the engine reproduces all sixteen figures exactly. Those
+are locked in as `tests/test_golden_scenarios.py` and are the suite's oracle.
+
+### Not in this release
+
+Presumptive taxation under s.44AD and s.44ADA is not implemented. The research
+pass on it did not complete, and the rules were not going to be written from
+memory.

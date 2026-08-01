@@ -46,23 +46,50 @@ are documented in the module that handles them.
   splits within realistic employer policy bounds, across both regimes, to
   maximize take-home pay.
 - **Salary-slip analysis** — classify and reconcile monthly payslips against
-  Form 16, flagging unclassified line items instead of guessing.
+  Form 16, flagging unclassified line items instead of guessing, and feed them
+  straight into the engine.
+- **Salary-structure advisory** — what to change and what each change is worth,
+  with every figure measured by re-running the engine on the counterfactual
+  rather than estimated from a marginal rate.
+- **Regime-choice compliance** — Form 10-IEA only where business income makes it
+  necessary, and the s.139(1) deadline that decides whether the old regime is
+  available at all.
 
-## Not implemented (out of scope for v1)
+## Not implemented — and why
 
-- ITR-3 / ITR-4 (business/professional income, presumptive taxation).
-- PDF/OCR parsing of Form 16, AIS, or scanned payslips — inputs are
-  structured JSON/CSV. Document-parsing is a natural v2 addition; contributions
-  welcome.
-- Foreign income / foreign assets (Schedule FA), RSU/ESOP cross-border tax.
-- Pre-construction home-loan interest amortization.
-- Capital-loss carry-forward across years (single-year computation only).
-- 234C's carve-out for gains arising after an instalment due date.
-- Direct e-filing / portal automation.
+- ITR-3 / ITR-4 (business and professional income, presumptive taxation under
+  s.44AD/44ADA).
+- Foreign income and foreign assets (Schedule FA), cross-border RSU/ESOP tax.
+- Pre-construction home-loan interest amortisation.
+- Capital-loss carry-forward across years — this is a single-year computation.
+- s.234C's carve-out for gains arising after an instalment due date, which needs
+  transaction-level dates.
+- Direct e-filing or portal automation.
 
-Every one of these is called out at the point in the code where it would
-otherwise silently produce a wrong number — grep for "not modelled" if you
-want the full list with context.
+### Document importers, deliberately absent
+
+Importers for the **prefill JSON**, **AIS JSON** and **Form 16 Part B PDF** are
+not here, and that is a decision rather than a gap. ITD publishes no schema for
+any of them. Everything that could be learned about their key names came from a
+single real file each — n=1 — and the one Form 16 sample already contained two
+different Part B renderings with shifted sub-item letters and a self-inconsistent
+80D figure. A parser built on that would work on one payroll vendor and fail
+silently on the rest, and silent failure in a tax tool is the failure mode this
+project exists to avoid.
+
+Two things *are* worth building and are the natural next step, because they rest
+on published or self-describing formats rather than guesswork:
+
+- The **ITR export schemas** are real JSON Schema documents published by ITD, with
+  `additionalProperties: false` set at the root. Generate types from them and
+  validate in CI; do not hand-write the structs.
+- **Form 26AS in its text export** is caret-delimited and carries its own column
+  headers per part, so it can be parsed as a self-describing stream rather than
+  against a fixed layout.
+
+Every limitation above is also called out at the point in the code where it would
+otherwise silently produce a wrong number — grep for `not modelled` for the full
+list with context.
 
 ## Why per-year rule modules
 
