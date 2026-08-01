@@ -30,6 +30,7 @@ Edge cases handled:
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
+from .compliance import regime_choice_guidance
 from .models import Regime, SalaryComponent, SalaryIncome, TaxpayerProfile
 from .regime import compare_regimes, compute_regime
 from .rules.base import AssessmentYearRules, RegimeRules
@@ -219,8 +220,17 @@ LEVERS: list[Lever] = [
 
 
 def analyse_salary_structure(
-    profile: TaxpayerProfile, rules: AssessmentYearRules
+    profile: TaxpayerProfile,
+    rules: AssessmentYearRules,
+    has_business_or_professional_income: bool = False,
 ) -> SalaryAdvice:
+    """Advise on structure and regime.
+
+    `has_business_or_professional_income` drives the Form 10-IEA guidance only. It
+    defaults to False because this engine models ITR-1/ITR-2 profiles, and telling a
+    salaried taxpayer to file Form 10-IEA would make them file a form the law does not
+    require of them.
+    """
     comparison = compare_regimes(profile, rules)
     regime = comparison.recommended
     regime_rules = rules.old_regime if regime == str(Regime.OLD) else rules.new_regime
@@ -270,17 +280,16 @@ def analyse_salary_structure(
         if cumulative_outcome is not None:
             cumulative = cumulative_outcome[0]
 
-    if regime == str(Regime.OLD):
+    guidance = regime_choice_guidance(
+        profile.assessment_year,
+        regime,
+        has_business_or_professional_income=has_business_or_professional_income,
+    )
+    if guidance is not None:
         recommendations.append(
             Recommendation(
-                action="Check whether Form 10-IEA is needed to opt out of the new regime",
-                rationale=(
-                    "The new regime is the default under s.115BAC. A taxpayer with business "
-                    "or professional income must file Form 10-IEA on or before the s.139(1) "
-                    "due date to choose the old regime, and can switch back only once. A "
-                    "salaried taxpayer filing ITR-1 or ITR-2 with no business income makes "
-                    "the choice in the return itself and files no form."
-                ),
+                action=guidance.headline,
+                rationale=guidance.detail,
                 annual_tax_saving=0,
                 category="compliance",
             )
