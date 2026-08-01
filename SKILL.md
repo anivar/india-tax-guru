@@ -1,6 +1,23 @@
 ---
 name: india-tax-guru
-description: India income-tax planning, salary/CTC restructuring, and ITR-1/2 filing-support toolkit. Computes old-vs-new regime comparison, HRA/capital-gains/house-property tax, advance-tax interest, and optimal CTC splits. Trigger on India income tax, ITR-1/ITR-2, old vs new tax regime, HRA exemption, CTC structuring/salary restructuring, capital gains tax India, Form 16/payslip reconciliation, or advance tax interest (234B/234C) questions.
+description: >
+  India income-tax planning, salary/CTC restructuring, and ITR-1/2
+  filing-support toolkit. Computes old-vs-new regime comparison,
+  HRA/capital-gains/house-property tax, advance-tax interest (234B/234C),
+  and optimal CTC splits. Triggers on: India income tax, ITR-1/ITR-2, old vs
+  new tax regime, HRA exemption, CTC structuring/salary restructuring,
+  capital gains tax India, Form 16/payslip reconciliation, or advance tax
+  interest questions.
+license: MIT
+user-invocable: true
+agentic: true
+compatibility: "Requires Python >=3.11 and uv. CLI: itg. Library: india_tax_guru."
+metadata:
+  author: Anivar Aravind
+  author_url: https://anivar.net
+  version: 0.1.0
+  tags: india, income-tax, itr, tax-planning, salary-structuring, ctc, hra, capital-gains, regime-comparison
+allowed-tools: Bash(uv:*) Bash(itg:*)
 ---
 
 # india-tax-guru

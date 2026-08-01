@@ -1,8 +1,16 @@
 # india-tax-guru
 
+[![CI](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Install with skills.sh](https://img.shields.io/badge/skills.sh-npx%20skills%20add%20anivar%2Findia--tax--guru-blue)](https://skills.sh/anivar)
+
 Open-source India income-tax **planning, salary-structuring, and ITR-filing
-support** toolkit. Library + CLI, usable standalone or as a Claude Code skill
-(see `SKILL.md`).
+support** toolkit. Library + CLI, usable standalone or as an agent skill
+(Claude Code `SKILL.md`, or any AGENTS.md-compatible agent).
+
+```bash
+npx skills add anivar/india-tax-guru
+```
 
 Not a filing agent for the government e-filing portal, and not a substitute
 for a CA on complex returns — it's a computation engine you can trust because
