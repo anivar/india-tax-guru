@@ -1,7 +1,7 @@
 # india-tax-guru
 
 [![CI](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/anivar/india-tax-guru)](https://github.com/anivar/india-tax-guru/releases)
+[![PyPI](https://img.shields.io/pypi/v/india-tax-guru)](https://pypi.org/project/india-tax-guru/)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Install with skills.sh](https://img.shields.io/badge/skills.sh-npx%20skills%20add%20anivar%2Findia--tax--guru-blue)](https://skills.sh/anivar/india-tax-guru)
@@ -147,15 +147,15 @@ npx skills add anivar/india-tax-guru
 **As a CLI**, installed once and on your PATH:
 
 ```bash
-uv tool install "india-tax-guru[cli] @ git+https://github.com/anivar/india-tax-guru"
+uv tool install "india-tax-guru[cli]"
 itg years
 ```
 
 **As a library** in your project:
 
 ```bash
-uv add "india-tax-guru @ git+https://github.com/anivar/india-tax-guru"
-# or: pip install "india-tax-guru @ git+https://github.com/anivar/india-tax-guru"
+uv add india-tax-guru
+# or: pip install india-tax-guru
 ```
 
 The library has zero runtime dependencies; `click` is pulled in only by the
