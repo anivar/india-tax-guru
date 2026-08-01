@@ -1,6 +1,7 @@
 {
   "assessment_year": "2026-27",
   "age_band": "below_60",
+  "is_resident": true,
   "salaries": [
     {
       "employer_name": "Acme Corp",
@@ -8,17 +9,31 @@
       "components": [
         {"name": "Basic", "annual_amount": 800000},
         {"name": "HRA", "annual_amount": 400000, "is_hra": true},
-        {"name": "Special Allowance", "annual_amount": 800000}
+        {"name": "Meal Vouchers", "annual_amount": 26400, "section_10_14_exempt_amount": 26400},
+        {"name": "Special Allowance", "annual_amount": 773600}
       ],
       "rent_periods": [
-        {"months": 12, "monthly_rent": 45000, "is_metro": true}
+        {"months": 6, "monthly_rent": 45000, "is_metro": true},
+        {"months": 6, "monthly_rent": 52000, "is_metro": true}
       ],
+      "professional_tax_paid": 2500,
       "employer_nps_contribution": 80000
     }
   ],
+  "house_properties": [
+    {"is_self_occupied": true, "home_loan_interest": 180000}
+  ],
+  "capital_gains": [
+    {"asset_class": "equity_mf", "is_long_term": true, "gain": 300000}
+  ],
+  "other_income": {"savings_bank_interest": 8000, "fd_interest": 20000},
   "deductions": {
     "section_80c": 150000,
     "section_80ccd_1b": 50000,
-    "section_80d_self_family": 25000
-  }
+    "section_80d_self_family": 25000,
+    "section_80d_parents": 50000,
+    "parents_are_senior_citizens": true,
+    "section_80tta_or_ttb": 8000
+  },
+  "taxes_paid": {"tds_salary": 300000, "tds_other": 1200}
 }

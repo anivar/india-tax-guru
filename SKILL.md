@@ -44,13 +44,17 @@ versioned per assessment year so nothing drifts silently across Budgets.
 2. Run `uv run itg compare <profile.json>` for a regime comparison, or
    `uv run itg optimize-ctc <ctc_input.json>` for salary structuring.
 3. For anything not covered by the CLI (payslip reconciliation, one-off
-   capital-gains-loss set-off questions), import the library directly:
-   `india_tax_guru.payslip`, `india_tax_guru.capital_gains`,
-   `india_tax_guru.interest`.
-4. Always surface the `notes`/`deduction_notes`/`unabsorbed_loss_note` fields
-   in the result to the user verbatim — they flag simplifications (e.g.
-   carry-forward losses not modelled) that change what the number means.
-5. State the assessment year's rule source (cited at the top of the matching
+   set-off questions), import the library directly: `india_tax_guru.payslip`,
+   `india_tax_guru.capital_gains`, `india_tax_guru.interest`.
+4. **Always surface the result's `notes` list verbatim.** It carries every
+   disallowance, statutory cap and unmodelled simplification that changed the
+   number — for example that a new-regime computation dropped the user's HRA
+   and 80C entirely, or that a house-property loss is being carried forward
+   rather than set off. Reporting the figure without them is misleading.
+5. Distinguish `total_tax_liability` (gross) from `refund_due` /
+   `balance_payable` (settled after TDS and advance tax). Users asking "how
+   much tax do I owe" almost always mean the latter.
+6. State the assessment year's rule source (cited at the top of the matching
    `src/india_tax_guru/rules/ay*.py` file) so the user can sanity-check it
    against a current CBDT circular before filing.
 
