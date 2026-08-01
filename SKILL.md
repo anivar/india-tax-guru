@@ -1,0 +1,48 @@
+---
+name: india-tax-guru
+description: India income-tax planning, salary/CTC restructuring, and ITR-1/2 filing-support toolkit. Computes old-vs-new regime comparison, HRA/capital-gains/house-property tax, advance-tax interest, and optimal CTC splits. Trigger on India income tax, ITR-1/ITR-2, old vs new tax regime, HRA exemption, CTC structuring/salary restructuring, capital gains tax India, Form 16/payslip reconciliation, or advance tax interest (234B/234C) questions.
+---
+
+# india-tax-guru
+
+A computation engine, not a chat-only assistant — every claim it makes about
+tax owed traces back to a specific function in this repo, and every rule is
+versioned per assessment year so nothing drifts silently across Budgets.
+
+## When to use this skill
+
+- User asks which tax regime (old vs new) is better for their income/deductions.
+- User wants their CTC restructured (Basic/HRA/employer-NPS split) to maximize
+  take-home pay.
+- User wants HRA exemption, capital gains tax, or house-property income/loss
+  computed correctly (period-wise, not a flat annual shortcut).
+- User wants to reconcile monthly payslips against Form 16.
+- User wants advance-tax interest (234B/234C) estimated.
+
+## How to use it
+
+1. Gather the taxpayer's inputs into the JSON shape documented in
+   `docs/profile_schema.md`. Ask only for what's missing — don't re-derive
+   figures the user already gave you.
+2. Run `uv run itg compare <profile.json>` for a regime comparison, or
+   `uv run itg optimize-ctc <ctc_input.json>` for salary structuring.
+3. For anything not covered by the CLI (payslip reconciliation, one-off
+   capital-gains-loss set-off questions), import the library directly:
+   `india_tax_guru.payslip`, `india_tax_guru.capital_gains`,
+   `india_tax_guru.interest`.
+4. Always surface the `notes`/`deduction_notes`/`unabsorbed_loss_note` fields
+   in the result to the user verbatim — they flag simplifications (e.g.
+   carry-forward losses not modelled) that change what the number means.
+5. State the assessment year's rule source (cited at the top of the matching
+   `src/india_tax_guru/rules/ay*.py` file) so the user can sanity-check it
+   against a current CBDT circular before filing.
+
+## Boundaries
+
+- This tool does not file returns or talk to the e-filing portal. It produces
+  numbers and recommendations for the user (or another skill/tool) to act on.
+- ITR-3/ITR-4 (business/professional income) is out of scope — say so rather
+  than guessing at presumptive-taxation rules this repo doesn't implement.
+- If the assessment year requested has no rules module in
+  `src/india_tax_guru/rules/`, say so explicitly rather than extrapolating
+  from the nearest year — tax law does not change linearly.

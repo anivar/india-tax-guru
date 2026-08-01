@@ -1,0 +1,8 @@
+{
+  "assessment_year": "2026-27",
+  "annual_ctc": 2400000,
+  "annual_rent": 900000,
+  "is_metro": true,
+  "age_band": "below_60",
+  "other_deductions": {"section_80c": 150000, "section_80ccd_1b": 50000}
+}

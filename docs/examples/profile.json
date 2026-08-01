@@ -1,0 +1,24 @@
+{
+  "assessment_year": "2026-27",
+  "age_band": "below_60",
+  "salaries": [
+    {
+      "employer_name": "Acme Corp",
+      "basic_plus_da_annual": 800000,
+      "components": [
+        {"name": "Basic", "annual_amount": 800000},
+        {"name": "HRA", "annual_amount": 400000, "is_hra": true},
+        {"name": "Special Allowance", "annual_amount": 800000}
+      ],
+      "rent_periods": [
+        {"months": 12, "monthly_rent": 45000, "is_metro": true}
+      ],
+      "employer_nps_contribution": 80000
+    }
+  ],
+  "deductions": {
+    "section_80c": 150000,
+    "section_80ccd_1b": 50000,
+    "section_80d_self_family": 25000
+  }
+}
