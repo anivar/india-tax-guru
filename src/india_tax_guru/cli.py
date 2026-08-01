@@ -10,6 +10,7 @@ import click
 from .advisory import analyse_salary_structure
 from .models import (
     AgeBand,
+    AssesseeType,
     CapitalGainLot,
     Deductions,
     HouseProperty,
@@ -40,6 +41,7 @@ def _profile_from_dict(d: dict) -> TaxpayerProfile:
     return TaxpayerProfile(
         assessment_year=d["assessment_year"],
         age_band=AgeBand(d.get("age_band", "below_60")),
+        assessee_type=AssesseeType(d.get("assessee_type", "individual")),
         is_resident=d.get("is_resident", True),
         salaries=salaries,
         house_properties=[HouseProperty(**h) for h in d.get("house_properties", [])],

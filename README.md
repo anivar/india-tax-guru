@@ -57,6 +57,12 @@ are documented in the module that handles them.
 
 ## Not implemented — and why
 
+- **Anyone but an individual.** HUF, AOP/BOI, firm, LLP and company are each taxed
+  under different rules — an HUF gets no s.87A rebate, no s.16(ia) standard deduction
+  and no age concession; a company sits outside s.115BAC entirely, with its own rates
+  and minimum alternate tax. Constructing a profile with any of these raises
+  `UnsupportedAssesseeError` rather than quietly handing back an individual's tax,
+  because that wrong answer would look completely ordinary.
 - ITR-3 / ITR-4 (business and professional income, presumptive taxation under
   s.44AD/44ADA).
 - Foreign income and foreign assets (Schedule FA), cross-border RSU/ESOP tax.
@@ -66,16 +72,23 @@ are documented in the module that handles them.
   transaction-level dates.
 - Direct e-filing or portal automation.
 
-### Document importers, deliberately absent
+### Document importers: the agent is the importer
 
-Importers for the **prefill JSON**, **AIS JSON** and **Form 16 Part B PDF** are
-not here, and that is a decision rather than a gap. ITD publishes no schema for
+There is no code that parses the **prefill JSON**, **AIS JSON** or **Form 16 Part B
+PDF**, and that is a decision rather than a gap. ITD publishes no schema for
 any of them. Everything that could be learned about their key names came from a
 single real file each — n=1 — and the one Form 16 sample already contained two
 different Part B renderings with shifted sub-item letters and a self-inconsistent
 80D figure. A parser built on that would work on one payroll vendor and fail
 silently on the rest, and silent failure in a tax tool is the failure mode this
 project exists to avoid.
+
+What works instead is to let an **agent** do the extraction and this engine do the
+arithmetic. Reading a semi-structured document whose exact shape it has never seen is
+what a model is good at; arithmetic nobody can unit-test is what it is bad at. So the
+agent fills in `profile.json` and never states a tax figure of its own.
+[`docs/importing.md`](docs/importing.md) carries the per-document guidance and the
+reconciliation checks to run before trusting any extracted value.
 
 Two things *are* worth building and are the natural next step, because they rest
 on published or self-describing formats rather than guesswork:

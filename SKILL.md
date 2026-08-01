@@ -36,11 +36,29 @@ versioned per assessment year so nothing drifts silently across Budgets.
 - User wants to reconcile monthly payslips against Form 16.
 - User wants advance-tax interest (234B/234C) estimated.
 
+## Importing documents
+
+There are no document parsers in this repo, by design — ITD publishes no schema for
+the prefill JSON or AIS JSON, and Form 16 Part B renders differently per payroll
+vendor, so a hardcoded parser fails silently. **You are the importer.** Read the
+document, fill in `profile.json`, and let the engine do the arithmetic.
+
+The division of labour is not negotiable: **you never compute tax.** Reading a
+semi-structured document you have never seen before is what you are good at;
+arithmetic that nobody can unit-test is what the engine is for. If you catch yourself
+about to state a tax figure you did not get from `itg`, stop and run it.
+
+`docs/importing.md` has per-document guidance (prefill JSON, Form 26AS, AIS, Form 16)
+and the reconciliation checks to run before trusting anything you extracted. The
+short version: echo every extracted figure back to the user, never invent a field you
+could not find, never mark a reimbursement exempt on the strength of a payslip line,
+and report any figure that two documents disagree on rather than silently picking one.
+
 ## How to use it
 
 1. Gather the taxpayer's inputs into the JSON shape documented in
-   `docs/profile_schema.md`. Ask only for what's missing — don't re-derive
-   figures the user already gave you.
+   `docs/profile_schema.md` — from documents (see above) or by asking. Ask only for
+   what's missing; don't re-derive figures the user already gave you.
 2. Run `uv run itg compare <profile.json>` for a regime comparison, or
    `uv run itg optimize-ctc <ctc_input.json>` for salary structuring.
 3. For anything not covered by the CLI (payslip reconciliation, one-off
@@ -60,10 +78,16 @@ versioned per assessment year so nothing drifts silently across Budgets.
 
 ## Boundaries
 
-- This tool does not file returns or talk to the e-filing portal. It produces
-  numbers and recommendations for the user (or another skill/tool) to act on.
-- ITR-3/ITR-4 (business/professional income) is out of scope — say so rather
-  than guessing at presumptive-taxation rules this repo doesn't implement.
+- **Individuals only.** HUF, AOP/BOI, firm, LLP and company are each taxed under
+  different rules — an HUF gets no s.87A rebate, no standard deduction and no age
+  concession; a company is outside s.115BAC entirely and has its own rates and MAT.
+  Constructing a profile with any of these raises `UnsupportedAssesseeError` rather
+  than quietly returning an individual's tax. Relay the refusal; don't work around it.
+- **ITR-1 and ITR-2 only.** No business or professional income, and no presumptive
+  taxation under s.44AD or s.44ADA — say so rather than guessing at rules this repo
+  doesn't implement.
+- This tool does not file returns or talk to the e-filing portal. It produces numbers
+  and recommendations for the user (or another tool) to act on.
 - If the assessment year requested has no rules module in
-  `src/india_tax_guru/rules/`, say so explicitly rather than extrapolating
-  from the nearest year — tax law does not change linearly.
+  `src/india_tax_guru/rules/`, say so explicitly rather than extrapolating from the
+  nearest year — tax law does not change linearly.

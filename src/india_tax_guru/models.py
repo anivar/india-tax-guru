@@ -16,6 +16,72 @@ class AgeBand(StrEnum):
     SUPER_SENIOR_80_PLUS = "super_senior_80_plus"
 
 
+class AssesseeType(StrEnum):
+    """Class of person being assessed.
+
+    Only INDIVIDUAL is implemented. The others are named rather than omitted so that
+    supplying one produces a refusal instead of an individual's tax computed on an
+    HUF's or a company's figures — the reliefs differ enough that the answer would be
+    wrong without anything looking wrong.
+    """
+
+    INDIVIDUAL = "individual"
+    HUF = "huf"
+    AOP_BOI = "aop_boi"
+    FIRM = "firm"
+    LLP = "llp"
+    COMPANY = "company"
+
+
+class UnsupportedAssesseeError(NotImplementedError):
+    """Raised for an assessee class whose rules this engine does not implement."""
+
+
+#: Why each unsupported class cannot borrow the individual computation.
+_UNSUPPORTED_REASONS: dict[str, str] = {
+    AssesseeType.HUF: (
+        "An HUF is taxed differently from an individual in at least these ways: the "
+        "s.87A rebate is available only to a resident INDIVIDUAL; the s.16(ia) standard "
+        "deduction presupposes salary income, which an HUF cannot have; the raised basic "
+        "exemption at 60 and 80 is an individual's age concession and has no HUF "
+        "equivalent; s.80CCD (NPS) is confined to individuals; and HRA under s.10(13A) "
+        "again presupposes salary. Computing an HUF as an individual would silently grant "
+        "several of these."
+    ),
+    AssesseeType.AOP_BOI: (
+        "An AOP or BOI is charged under its own paragraph of the Finance Act, with rules "
+        "turning on whether the members' shares are determinate and on the members' own "
+        "rates — not the individual slab structure."
+    ),
+    AssesseeType.FIRM: (
+        "A firm is taxed at a flat 30% with its own surcharge threshold, and s.115BAC does "
+        "not apply to it, so there is no old-versus-new regime choice to make."
+    ),
+    AssesseeType.LLP: (
+        "An LLP is taxed as a firm at a flat rate, is outside s.115BAC entirely, and is "
+        "also ineligible for presumptive taxation under s.44AD."
+    ),
+    AssesseeType.COMPANY: (
+        "A company is outside s.115BAC altogether. It is charged at its own flat rates "
+        "(with concessional regimes under s.115BAA and s.115BAB), is subject to minimum "
+        "alternate tax under s.115JB, has a different surcharge structure, and files "
+        "ITR-6. Essentially none of this engine applies."
+    ),
+}
+
+
+def assert_supported(assessee_type: "AssesseeType") -> None:
+    if assessee_type == AssesseeType.INDIVIDUAL:
+        return
+    reason = _UNSUPPORTED_REASONS.get(
+        assessee_type, "This engine implements the individual computation only."
+    )
+    raise UnsupportedAssesseeError(
+        f"assessee_type={assessee_type!s} is not supported. {reason} "
+        "This engine covers resident and non-resident INDIVIDUALS filing ITR-1 or ITR-2."
+    )
+
+
 class AssetClass(StrEnum):
     """Capital asset classes, split by how they are TAXED rather than by what they are.
 
@@ -172,6 +238,9 @@ class TaxpayerProfile:
     assessment_year: str  # e.g. "2026-27"
     age_band: AgeBand = AgeBand.BELOW_60
     is_resident: bool = True  # basic-exemption set-off against capital gains is resident-only
+    #: Validated at construction. Anything but INDIVIDUAL raises rather than being
+    #: silently computed on the individual's rules.
+    assessee_type: AssesseeType = AssesseeType.INDIVIDUAL
     salaries: list[SalaryIncome] = field(default_factory=list)
     house_properties: list[HouseProperty] = field(default_factory=list)
     capital_gains: list[CapitalGainLot] = field(default_factory=list)
@@ -181,3 +250,5 @@ class TaxpayerProfile:
 
     def __post_init__(self):
         self.age_band = AgeBand(self.age_band)
+        self.assessee_type = AssesseeType(self.assessee_type)
+        assert_supported(self.assessee_type)
