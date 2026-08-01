@@ -22,6 +22,8 @@ Edge cases handled:
 
 from dataclasses import dataclass, field
 
+from .models import SalaryComponent, SalaryIncome
+
 _TAXABLE_ALIASES = {
     "basic": "Basic",
     "basic pay": "Basic",
@@ -133,6 +135,89 @@ def analyze_payslips(slips: list[MonthlySlip]) -> PayslipAnalysis:
         gross_taxable_annualized=sum(taxable.values()),
         notes=notes,
     )
+
+
+def to_salary_income(
+    analysis: PayslipAnalysis,
+    employer_name: str = "From payslips",
+    rent_periods: list | None = None,
+    annualise: bool = False,
+    treat_exempt_with_proof_as_exempt: bool = False,
+) -> tuple[SalaryIncome, list[str]]:
+    """Build a `SalaryIncome` from analysed payslips, for use with the tax engine.
+
+    `annualise` scales a partial year up to twelve months, which is right for projecting
+    a full year mid-way through it and WRONG for computing an actual return — so it is
+    off by default and the scaling is always reported in the returned notes.
+
+    `treat_exempt_with_proof_as_exempt` is likewise off by default: LTA and reimbursement
+    components are exempt only against submitted bills, which a payslip cannot evidence.
+    Defaulting it on would silently understate taxable salary.
+    """
+    notes = list(analysis.notes)
+    months = len(analysis.months_covered)
+    factor = 1.0
+    if annualise and 0 < months < 12:
+        factor = 12 / months
+        notes.append(
+            f"Figures scaled from {months} month(s) to a full year (x{factor:.2f}). This "
+            "projects a full year; it is not a basis for filing an actual return."
+        )
+    elif months and months < 12:
+        notes.append(
+            f"Only {months} month(s) of payslips supplied; figures are the sum of those "
+            "months, not a full year."
+        )
+
+    components: list[SalaryComponent] = []
+    for name, amount in analysis.taxable_components.items():
+        components.append(
+            SalaryComponent(
+                name=name,
+                annual_amount=round(amount * factor),
+                is_hra=(name == "HRA"),
+            )
+        )
+    for name, amount in analysis.exempt_with_proof_components.items():
+        scaled = round(amount * factor)
+        components.append(
+            SalaryComponent(
+                name=name,
+                annual_amount=scaled,
+                section_10_14_exempt_amount=(
+                    scaled if treat_exempt_with_proof_as_exempt else 0
+                ),
+            )
+        )
+    if analysis.exempt_with_proof_components and not treat_exempt_with_proof_as_exempt:
+        notes.append(
+            "Reimbursement and LTA components were treated as fully TAXABLE because a "
+            "payslip cannot evidence submitted bills. Pass "
+            "treat_exempt_with_proof_as_exempt=True only if proof was actually filed."
+        )
+
+    basic = analysis.taxable_components.get("Basic", 0) + analysis.taxable_components.get(
+        "Dearness Allowance", 0
+    )
+    if basic == 0:
+        notes.append(
+            "No Basic component was identified, so HRA and 80CCD(2) caps — both computed "
+            "on basic+DA — will come out as zero. Check the payslip line-item names."
+        )
+
+    salary = SalaryIncome(
+        employer_name=employer_name,
+        components=components,
+        basic_plus_da_annual=round(basic * factor),
+        rent_periods=rent_periods or [],
+        professional_tax_paid=round(
+            analysis.deduction_components.get("Professional Tax", 0) * factor
+        ),
+        employer_nps_contribution=round(
+            analysis.deduction_components.get("Employer NPS", 0) * factor
+        ),
+    )
+    return salary, notes
 
 
 def reconcile_against_form16(analysis: PayslipAnalysis, form16_gross_salary: int) -> str | None:

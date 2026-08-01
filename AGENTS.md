@@ -23,8 +23,8 @@ uv sync
 | Compare old vs new regime | `uv run itg compare <profile.json>` |
 | Optimize CTC split | `uv run itg optimize-ctc <ctc_input.json>` |
 | List supported years | `uv run itg years` |
-| Payslip reconciliation | `india_tax_guru.payslip.analyze_payslips` / `reconcile_against_form16` (library only, no CLI) |
-| Advance-tax interest | `india_tax_guru.interest.compute_advance_tax_interest` (library only) |
+| Payslip reconciliation | `india_tax_guru.payslip.analyze_payslips` / `reconcile_against_form16` (library only) |
+| Advance-tax interest | computed inside `compute_regime` when `taxes_paid.advance_tax_by_checkpoint` is supplied; also callable directly from `india_tax_guru.interest` |
 
 Input JSON shape: `docs/profile_schema.md`. Examples: `docs/examples/*.json`.
 
@@ -34,23 +34,29 @@ Input JSON shape: `docs/profile_schema.md`. Examples: `docs/examples/*.json`.
    function in `src/india_tax_guru/`; don't hand-compute a workaround when a
    module already exists (`salary.py`, `capital_gains.py`, `house_property.py`,
    `deductions.py`, `compute.py`, `regime.py`, `interest.py`, `restructuring.py`).
-2. **Surface `notes` fields verbatim.** `RegimeResult.deduction_notes`,
-   `CapitalGainsResult.unabsorbed_loss_note`, `HousePropertyResult.note`, and
-   `PayslipAnalysis.notes` flag simplifications that change what a number
-   means (e.g. "carry-forward not modelled"). Dropping these when reporting
-   to a user is a correctness bug, not a style choice.
-3. **Adding a new assessment year:** copy the newest `rules/ay<yy>_<yy>.py`,
-   update every figure, cite the Finance Act / CBDT notification in the
-   module docstring, register it in `rules/__init__.py`. Never edit an
-   existing year's numbers to "fix" a new year's requirement — see
-   CONTRIBUTING.md.
-4. **Regime-gating is load-bearing.** New regime disallows HRA exemption,
-   most Section 10(14) allowances, and nearly all Chapter VI-A deductions
-   except 80CCD(2). This is enforced in `salary.taxable_salary(regime=...)`
-   and `deductions.compute_deductions(..., regime)` — do not bypass by
-   computing exemptions regime-agnostically.
-5. **Before merging a change:** `uv run pytest` and `uv run ruff check .`
-   must both pass (CI enforces this on `.github/workflows/ci.yml`).
+2. **Surface `RegimeResult.notes` verbatim.** It aggregates every disallowance,
+   statutory cap and unmodelled simplification that changed the number.
+   Dropping it when reporting to a user is a correctness bug, not a style
+   choice.
+3. **`total_tax_liability` is gross.** Use `refund_due` / `balance_payable` for
+   what the taxpayer actually settles.
+4. **Adding a new assessment year:** copy the newest `rules/ay<yy>_<yy>.py`,
+   update every figure, cite the Finance Act / CBDT notification in the module
+   docstring, register it in `rules/__init__.py`. Never edit an existing year's
+   numbers to fix a new year's requirement — see CONTRIBUTING.md.
+5. **Regime-gating is load-bearing and has bitten repeatedly.** The new regime
+   disallows HRA and s.10(14) allowances, professional tax, s.24(b)
+   self-occupied interest, house-property loss set-off, and all of Chapter VI-A
+   except 80CCD(2). Each is driven by an explicit flag on `RegimeRules` —
+   `allows_hra_and_10_14`, `allows_professional_tax`,
+   `allows_self_occupied_interest`, `allows_house_property_loss_setoff`,
+   `allowed_deductions`. Add a new relief by adding a flag, never by branching
+   on a bare `regime == "old"` string somewhere downstream.
+6. **Tests assert hand-derived figures**, with the derivation in the docstring.
+   Do not add a test that asserts only a range or a sign — that is precisely the
+   class of test that let ten wrong-figure bugs through a green suite.
+7. **Before merging:** `uv run pytest` and `uv run ruff check .` must both pass
+   (CI enforces this via `.github/workflows/ci.yml`).
 
 ## Boundaries
 

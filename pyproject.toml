@@ -5,7 +5,10 @@ description = "Open-source India income-tax planning, salary-structuring, and IT
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-dependencies = [
+dependencies = []
+
+[project.optional-dependencies]
+cli = [
     "click>=8.1",
 ]
 
@@ -33,4 +36,5 @@ select = ["E", "F", "I", "UP", "B"]
 dev = [
     "pytest>=8.0",
     "ruff>=0.6",
+    "click>=8.1",  # the `itg` CLI extra, so tests and local runs exercise it
 ]
