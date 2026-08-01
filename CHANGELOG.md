@@ -1,5 +1,24 @@
 # Changelog
 
+## v0.2.1
+
+Documentation, packaging and agent-experience hardening after an independent
+cold-review of the skill; first PyPI release.
+
+- CLI refusals (unsupported assessee, illegal HUF inputs, unknown assessment
+  year) are printed as one-line errors with exit code 1 instead of tracebacks.
+- Capital-gain lots silently reclassified by the engine (dates contradicting
+  `is_long_term`, or s.50AA deeming) are now reported in `notes`.
+- Fixed: ISO date strings on capital-gain lots crashed the CLI JSON path.
+- Docs: the foreign-stock boundary is drawn explicitly (sale gain modelled;
+  vesting-stage perquisite, Schedule FA and foreign tax credit not);
+  `profile_schema.md` documents `assessee_type`, `business_income`,
+  `foreign_equity`, lot dates and `months_elapsed_for_234b`; SKILL.md carries
+  the ordered GST-then-presumptive pipeline with a runnable snippet; an HUF
+  example profile is included.
+- Packaging: PyPI metadata, Trusted Publishing workflow, install paths for
+  skills.sh, `uv tool`, `uv add`/`pip`, and source.
+
 ## v0.2.0
 
 Extends the engine beyond the salaried individual: presumptive business income,

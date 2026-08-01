@@ -24,7 +24,7 @@ metadata:
   repository: https://github.com/anivar/india-tax-guru
   skills_page: https://skills.sh/anivar/india-tax-guru
   install: npx skills add anivar/india-tax-guru
-  version: 0.2.0
+  version: 0.2.1
   tags: india, income-tax, itr, itr-1, itr-2, itr-4, tax-planning, salary-structuring, ctc, hra, capital-gains, rsu, foreign-stock, regime-comparison, old-vs-new-regime, presumptive, 44ad, 44ada, gst, gst-reconciliation, huf, form-16, form-10iea, advance-tax, tds, freelancer-tax, e-filing
 allowed-tools: Bash(uv:*), Bash(itg:*)
 ---
