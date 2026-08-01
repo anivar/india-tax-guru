@@ -46,40 +46,65 @@ def test_marginal_relief_never_lets_surcharge_exceed_excess_income(rules):
         )
 
 
-def test_surcharge_on_capital_gains_capped_at_15_pct(rules):
-    """Salary 30,00,000 + equity LTCG 2,50,00,000, new regime.
-
-    Total income is over 2 crore so the general rate is 25%, but surcharge on the
-    s.112A portion is capped at 15%.
-    """
-    profile = TaxpayerProfile(
+def _salary_plus_ltcg(salary: int, ltcg: int) -> TaxpayerProfile:
+    return TaxpayerProfile(
         assessment_year="2026-27",
         salaries=[
             SalaryIncome(
                 employer_name="x",
-                basic_plus_da_annual=1_500_000,
-                components=[SalaryComponent(name="Basic", annual_amount=3_000_000)],
+                basic_plus_da_annual=salary // 2,
+                components=[SalaryComponent(name="Basic", annual_amount=salary)],
             )
         ],
         capital_gains=[
-            CapitalGainLot(
-                asset_class=AssetClass.EQUITY_MF, is_long_term=True, gain=25_000_000
-            )
+            CapitalGainLot(asset_class=AssetClass.EQUITY_MF, is_long_term=True, gain=ltcg)
         ],
     )
-    result = compute_regime(profile, rules, "new")
+
+
+def test_25_pct_clause_does_not_fire_on_capital_gains_alone(rules):
+    """Salary 30,00,000 + equity LTCG 2,50,00,000 — total income is 2.79 crore.
+
+    The 25% clause tests income EXCLUDING s.112A gains, which here is only 29,25,000.
+    So 25% does not apply; the residual clause charges 15% on the whole tax. Testing
+    the 25% clause against total income would over-tax this taxpayer substantially.
+    """
+    result = compute_regime(_salary_plus_ltcg(3_000_000, 25_000_000), rules, "new")
 
     slabs = slabs_for_age(rules.new_regime, AgeBand.BELOW_60)
     slab_component = slab_tax(3_000_000 - 75_000, slabs)
     cg_component = round((25_000_000 - rules.ltcg_112a_exemption) * rules.ltcg_112a_rate)
 
+    assert result.surcharge == round((slab_component + cg_component) * 0.15)
+    assert result.surcharge < round(slab_component * 0.25 + cg_component * 0.15)
+
+
+def test_25_pct_clause_fires_when_non_special_income_alone_breaches_2cr(rules):
+    """Salary 2,50,00,000 + equity LTCG 50,00,000.
+
+    Income excluding the gains is 2.49 crore, above 2 crore, so the 25% clause does
+    apply — to the salary tax. The s.112A portion is still capped at 15%.
+    """
+    result = compute_regime(_salary_plus_ltcg(25_000_000, 5_000_000), rules, "new")
+
+    slabs = slabs_for_age(rules.new_regime, AgeBand.BELOW_60)
+    slab_component = slab_tax(25_000_000 - 75_000, slabs)
+    cg_component = round((5_000_000 - rules.ltcg_112a_exemption) * rules.ltcg_112a_rate)
+
     assert result.surcharge == round(slab_component * 0.25 + cg_component * 0.15)
-    # Applying the general 25% to everything would over-tax by a wide margin.
-    assert result.surcharge < round((slab_component + cg_component) * 0.25)
+
+
+def test_special_income_cap_is_a_ceiling_not_a_floor(rules):
+    """At total income between 50L and 1cr the rate is 10%, so gains bear 10%, not 15%."""
+    result = compute_regime(_salary_plus_ltcg(3_000_000, 3_000_000), rules, "new")
+    slabs = slabs_for_age(rules.new_regime, AgeBand.BELOW_60)
+    slab_component = slab_tax(3_000_000 - 75_000, slabs)
+    cg_component = round((3_000_000 - rules.ltcg_112a_exemption) * rules.ltcg_112a_rate)
+    assert result.surcharge == round((slab_component + cg_component) * 0.10)
 
 
 def test_new_regime_surcharge_capped_at_25_pct(rules):
-    """The old regime reaches 37% above 5 crore; the new regime stops at 25%."""
+    """The old regime reaches 37% above 5 crore; the new regime has no such clause."""
     profile = make_profile(100_000_000)
     old = compute_regime(profile, rules, "old")
     new = compute_regime(profile, rules, "new")

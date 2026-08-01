@@ -94,23 +94,54 @@ def apply_87a_rebate(
     return min(tax_on_slab_income, excess_income)
 
 
-def _surcharge_rate_for(total_income: int, regime_rules: RegimeRules) -> tuple[float, int | None]:
-    """Applicable general surcharge rate and the threshold that triggered it."""
-    rate = 0.0
-    threshold: int | None = None
-    for bracket in sorted(regime_rules.surcharge, key=lambda b: b.income_above):
-        if total_income > bracket.income_above:
-            rate = min(bracket.rate, regime_rules.surcharge_cap_rate)
-            threshold = bracket.income_above
-    return rate, threshold
+def surcharge_rate_for(
+    total_income: int, special_rate_income: int, regime_rules: RegimeRules
+) -> tuple[float, int | None]:
+    """Applicable general surcharge rate, and the threshold that triggered it.
+
+    The clauses are not a ladder on one quantity. Clauses flagged
+    `basis_excludes_special_income` (the 25% and 37% ones) test income with dividend and
+    s.111A/112/112A gains STRIPPED OUT; the rest test total income as it stands. So a
+    taxpayer with 30,00,000 of salary and 2,50,00,000 of equity gains does NOT reach 25%
+    — their non-special income is far below 2 crore — and the residual clause charges
+    15% on everything instead. Testing the 25% clause against total income would
+    over-tax exactly the taxpayer most likely to notice.
+    """
+    excluding = max(0, total_income - special_rate_income)
+
+    exclusive = sorted(
+        (c for c in regime_rules.surcharge if c.basis_excludes_special_income),
+        key=lambda c: -c.above,
+    )
+    for clause in exclusive:
+        if excluding > clause.above and (clause.upto is None or excluding <= clause.upto):
+            return min(clause.rate, regime_rules.surcharge_cap_rate), clause.above
+    # An open-ended exclusive clause still applies above its own ceiling-less range.
+    for clause in exclusive:
+        if clause.upto is None and excluding > clause.above:
+            return min(clause.rate, regime_rules.surcharge_cap_rate), clause.above
+
+    if total_income > regime_rules.surcharge_residual_above:
+        return (
+            min(regime_rules.surcharge_residual_rate, regime_rules.surcharge_cap_rate),
+            regime_rules.surcharge_residual_above,
+        )
+
+    inclusive = sorted(
+        (c for c in regime_rules.surcharge if not c.basis_excludes_special_income),
+        key=lambda c: -c.above,
+    )
+    for clause in inclusive:
+        if total_income > clause.above:
+            return min(clause.rate, regime_rules.surcharge_cap_rate), clause.above
+    return 0.0, None
 
 
-def _previous_surcharge_rate(threshold: int, regime_rules: RegimeRules) -> float:
-    """The surcharge rate applying at income exactly equal to `threshold`."""
-    rate = 0.0
-    for bracket in sorted(regime_rules.surcharge, key=lambda b: b.income_above):
-        if threshold > bracket.income_above:
-            rate = min(bracket.rate, regime_rules.surcharge_cap_rate)
+def _previous_surcharge_rate(
+    threshold: int, special_rate_income: int, regime_rules: RegimeRules
+) -> float:
+    """The surcharge rate applying at total income exactly equal to `threshold`."""
+    rate, _ = surcharge_rate_for(threshold, special_rate_income, regime_rules)
     return rate
 
 
@@ -118,16 +149,20 @@ def compute_surcharge(
     tax_on_normal_income: int,
     tax_on_special_income: int,
     total_income: int,
+    special_rate_income: int,
     regime_rules: RegimeRules,
     tax_at_total_income: Callable[[int], int],
 ) -> tuple[int, str | None]:
     """Surcharge with the 15% special-income cap and threshold marginal relief.
 
-    `tax_at_total_income(x)` must return total tax (slab tax after rebate PLUS
-    special-rate tax, before surcharge and cess) for a hypothetical total income of x.
+    `special_rate_income` is the INCOME taxed under s.111A/112/112A plus dividends —
+    used both to pick the clause and to apply the 15% cap. `tax_at_total_income(x)`
+    must return total tax (slab tax after rebate PLUS special-rate tax, before surcharge
+    and cess) for a hypothetical total income of x.
+
     Returns (surcharge, marginal_relief_note).
     """
-    rate, threshold = _surcharge_rate_for(total_income, regime_rules)
+    rate, threshold = surcharge_rate_for(total_income, special_rate_income, regime_rules)
     if rate == 0.0 or threshold is None:
         return 0, None
 
@@ -136,7 +171,7 @@ def compute_surcharge(
 
     # Marginal relief: (tax + surcharge) at this income must not exceed
     # (tax + surcharge) at the threshold plus the income earned beyond it.
-    prev_rate = _previous_surcharge_rate(threshold, regime_rules)
+    prev_rate = _previous_surcharge_rate(threshold, special_rate_income, regime_rules)
     prev_capped_rate = min(prev_rate, regime_rules.surcharge_special_income_cap_rate)
 
     tax_at_threshold = tax_at_total_income(threshold)

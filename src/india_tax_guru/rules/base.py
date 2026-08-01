@@ -13,9 +13,22 @@ class SlabBracket:
 
 
 @dataclass(frozen=True)
-class SurchargeBracket:
-    income_above: int
+class SurchargeClause:
+    """One clause of the surcharge charging paragraph.
+
+    The clauses are NOT a simple ladder on total income, which is the most commonly
+    mis-implemented part of the surcharge. Each clause tests "total income", but the
+    10% and 15% clauses test it INCLUDING dividend and s.111A/112/112A income, while
+    the 25% and 37% clauses test it EXCLUDING those. A taxpayer therefore reaches 25%
+    or 37% only if their non-special income alone breaches the threshold; if it does
+    not, however large the total, the residual clause pins the whole surcharge at 15%.
+    """
+
     rate: float
+    above: int
+    upto: int | None = None
+    #: True for the 25% and 37% clauses, which strip special-rate income before testing.
+    basis_excludes_special_income: bool = False
 
 
 @dataclass(frozen=True)
@@ -33,10 +46,15 @@ class RegimeRules:
     rebate_87a_income_limit: int  # total income at/below which rebate applies
     rebate_87a_max_amount: int
     rebate_87a_has_marginal_relief: bool  # new regime only; no such relief in the old regime
-    surcharge: tuple[SurchargeBracket, ...]
+    surcharge: tuple[SurchargeClause, ...]
     surcharge_cap_rate: float  # max surcharge rate regardless of income
-    # Surcharge on tax attributable to s.111A / s.112A / s.112 gains and dividend income
-    # is capped at this rate even when the taxpayer's general surcharge rate is higher.
+    #: Rate applied when total income (including special-rate income) exceeds
+    #: `surcharge_residual_above` but no exclusive-basis clause was reached.
+    surcharge_residual_rate: float
+    surcharge_residual_above: int
+    #: Surcharge on tax attributable to s.111A/112/112A gains and dividend income is
+    #: capped at this rate. It is a CEILING, not a floor: where the clause-determined
+    #: rate is lower (10%), the special portion bears that lower rate too.
     surcharge_special_income_cap_rate: float
     allows_professional_tax: bool  # s.16(iii)
     allows_hra_and_10_14: bool  # s.10(13A) and most s.10(14) allowances

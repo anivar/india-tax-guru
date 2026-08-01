@@ -153,10 +153,15 @@ def compute_regime(
         hypo_slab_tax = apply_87a_rebate(hypo_slab_tax, hypothetical_total, regime_rules)
         return hypo_slab_tax + cg_tax.tax
 
+    # Income (not tax) that the surcharge clauses strip out when testing the 25%/37%
+    # thresholds, and that the 15% cap attaches to: s.111A/112/112A gains and dividends.
+    special_rate_income = special_rate_gains + oi.dividend_income
+
     surcharge, relief_note = compute_surcharge(
         tax_on_normal_income,
         tax_on_special_income,
         total_income,
+        special_rate_income,
         regime_rules,
         tax_at_total_income,
     )

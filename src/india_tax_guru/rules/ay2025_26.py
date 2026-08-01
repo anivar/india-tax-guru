@@ -14,7 +14,7 @@ before 22 July 2024. Salary/house-property/deduction figures are unaffected.
 VERIFY against CBDT before relying on this for an actual filing.
 """
 
-from .base import AssessmentYearRules, RegimeRules, SlabBracket, SurchargeBracket
+from .base import AssessmentYearRules, RegimeRules, SlabBracket, SurchargeClause
 
 _OLD_SLABS_BELOW_60 = (
     SlabBracket(upto=250_000, rate=0.0),
@@ -43,12 +43,19 @@ OLD_REGIME = RegimeRules(
     rebate_87a_max_amount=12_500,
     rebate_87a_has_marginal_relief=False,
     surcharge=(
-        SurchargeBracket(income_above=5_000_000, rate=0.10),
-        SurchargeBracket(income_above=10_000_000, rate=0.15),
-        SurchargeBracket(income_above=20_000_000, rate=0.25),
-        SurchargeBracket(income_above=50_000_000, rate=0.37),
+        SurchargeClause(rate=0.10, above=5_000_000, upto=10_000_000),
+        SurchargeClause(rate=0.15, above=10_000_000, upto=20_000_000),
+        SurchargeClause(
+            rate=0.25, above=20_000_000, upto=50_000_000,
+            basis_excludes_special_income=True,
+        ),
+        SurchargeClause(
+            rate=0.37, above=50_000_000, basis_excludes_special_income=True
+        ),
     ),
     surcharge_cap_rate=0.37,
+    surcharge_residual_rate=0.15,
+    surcharge_residual_above=20_000_000,
     surcharge_special_income_cap_rate=0.15,
     allows_professional_tax=True,
     allows_hra_and_10_14=True,
@@ -86,11 +93,15 @@ NEW_REGIME = RegimeRules(
     rebate_87a_max_amount=25_000,
     rebate_87a_has_marginal_relief=True,
     surcharge=(
-        SurchargeBracket(income_above=5_000_000, rate=0.10),
-        SurchargeBracket(income_above=10_000_000, rate=0.15),
-        SurchargeBracket(income_above=20_000_000, rate=0.25),
+        SurchargeClause(rate=0.10, above=5_000_000, upto=10_000_000),
+        SurchargeClause(rate=0.15, above=10_000_000, upto=20_000_000),
+        SurchargeClause(
+            rate=0.25, above=20_000_000, basis_excludes_special_income=True
+        ),
     ),
     surcharge_cap_rate=0.25,
+    surcharge_residual_rate=0.15,
+    surcharge_residual_above=20_000_000,
     surcharge_special_income_cap_rate=0.15,
     allows_professional_tax=False,
     allows_hra_and_10_14=False,

@@ -12,7 +12,7 @@ other long-term gains at 12.5% without indexation.
 VERIFY against CBDT before relying on this for an actual filing.
 """
 
-from .base import AssessmentYearRules, RegimeRules, SlabBracket, SurchargeBracket
+from .base import AssessmentYearRules, RegimeRules, SlabBracket, SurchargeClause
 
 # Old regime: basic exemption rises with age (2.5L / 3L / 5L). Super-seniors lose the
 # 5% bracket entirely rather than merely shifting it, so all three are written out.
@@ -43,12 +43,19 @@ OLD_REGIME = RegimeRules(
     rebate_87a_max_amount=12_500,
     rebate_87a_has_marginal_relief=False,  # marginal relief u/s 87A exists only in the new regime
     surcharge=(
-        SurchargeBracket(income_above=5_000_000, rate=0.10),
-        SurchargeBracket(income_above=10_000_000, rate=0.15),
-        SurchargeBracket(income_above=20_000_000, rate=0.25),
-        SurchargeBracket(income_above=50_000_000, rate=0.37),
+        SurchargeClause(rate=0.10, above=5_000_000, upto=10_000_000),
+        SurchargeClause(rate=0.15, above=10_000_000, upto=20_000_000),
+        SurchargeClause(
+            rate=0.25, above=20_000_000, upto=50_000_000,
+            basis_excludes_special_income=True,
+        ),
+        SurchargeClause(
+            rate=0.37, above=50_000_000, basis_excludes_special_income=True
+        ),
     ),
     surcharge_cap_rate=0.37,
+    surcharge_residual_rate=0.15,
+    surcharge_residual_above=20_000_000,
     surcharge_special_income_cap_rate=0.15,
     allows_professional_tax=True,
     allows_hra_and_10_14=True,
@@ -87,11 +94,17 @@ NEW_REGIME = RegimeRules(
     rebate_87a_max_amount=60_000,
     rebate_87a_has_marginal_relief=True,
     surcharge=(
-        SurchargeBracket(income_above=5_000_000, rate=0.10),
-        SurchargeBracket(income_above=10_000_000, rate=0.15),
-        SurchargeBracket(income_above=20_000_000, rate=0.25),
+        SurchargeClause(rate=0.10, above=5_000_000, upto=10_000_000),
+        SurchargeClause(rate=0.15, above=10_000_000, upto=20_000_000),
+        # Open-ended: the new regime has no 5-crore/37% clause at all, which is why
+        # 25% is its ceiling. This is structural, not a separate capping rule.
+        SurchargeClause(
+            rate=0.25, above=20_000_000, basis_excludes_special_income=True
+        ),
     ),
-    surcharge_cap_rate=0.25,  # new regime caps surcharge at 25% even beyond 5 crore
+    surcharge_cap_rate=0.25,
+    surcharge_residual_rate=0.15,
+    surcharge_residual_above=20_000_000,
     surcharge_special_income_cap_rate=0.15,
     allows_professional_tax=False,
     allows_hra_and_10_14=False,

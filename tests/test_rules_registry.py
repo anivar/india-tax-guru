@@ -91,14 +91,36 @@ def test_old_regime_allows_what_it_should(year):
 
 
 @pytest.mark.parametrize("year", ALL_YEARS)
-def test_surcharge_brackets_ascend_in_both_rate_and_threshold(year):
+def test_surcharge_clauses_ascend_in_both_rate_and_threshold(year):
     rules = get_rules(year)
     for regime_rules in (rules.old_regime, rules.new_regime):
-        brackets = sorted(regime_rules.surcharge, key=lambda b: b.income_above)
-        rates = [b.rate for b in brackets]
+        clauses = sorted(regime_rules.surcharge, key=lambda c: c.above)
+        rates = [c.rate for c in clauses]
         assert rates == sorted(rates), "a higher threshold must not carry a lower rate"
         assert max(rates) <= regime_rules.surcharge_cap_rate
         assert regime_rules.surcharge_special_income_cap_rate <= regime_rules.surcharge_cap_rate
+        assert regime_rules.surcharge_residual_rate <= regime_rules.surcharge_cap_rate
+
+
+@pytest.mark.parametrize("year", ALL_YEARS)
+def test_only_the_top_surcharge_clauses_use_the_excluding_basis(year):
+    """The 10% and 15% clauses test total income as it stands; 25% and 37% strip out
+    dividend and s.111A/112/112A income before testing."""
+    rules = get_rules(year)
+    for regime_rules in (rules.old_regime, rules.new_regime):
+        for clause in regime_rules.surcharge:
+            if clause.rate <= 0.15:
+                assert not clause.basis_excludes_special_income
+            else:
+                assert clause.basis_excludes_special_income
+
+
+@pytest.mark.parametrize("year", ALL_YEARS)
+def test_new_regime_has_no_37_pct_clause(year):
+    """25% is the new regime's ceiling because no higher clause exists at all."""
+    new = get_rules(year).new_regime
+    assert max(c.rate for c in new.surcharge) == 0.25
+    assert any(c.upto is None and c.rate == 0.25 for c in new.surcharge)
 
 
 @pytest.mark.parametrize("year", ALL_YEARS)
