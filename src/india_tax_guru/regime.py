@@ -115,7 +115,7 @@ def compute_regime(
     total_deductions = ded_result.total + salary.employer_nps_deduction
     slab_taxable_income = max(0, gross_total_income - total_deductions)
 
-    slabs = slabs_for_age(regime_rules, profile.age_band)
+    slabs = slabs_for_age(regime_rules, profile.age_band, profile.is_resident)
     exemption_limit = basic_exemption_limit(slabs)
     headroom = (
         max(0, exemption_limit - slab_taxable_income) if profile.is_resident else 0
@@ -128,7 +128,9 @@ def compute_regime(
     total_income = round_288b(slab_taxable_income + special_rate_gains, rules.rounding_unit)
 
     tax_on_slab = slab_tax(slab_taxable_income, slabs)
-    tax_after_rebate = apply_87a_rebate(tax_on_slab, total_income, regime_rules)
+    tax_after_rebate = apply_87a_rebate(
+        tax_on_slab, total_income, regime_rules, profile.is_resident
+    )
     rebate = tax_on_slab - tax_after_rebate
 
     # Dividend tax attributed at the marginal rate — dividends sit atop the slab stack.
@@ -152,7 +154,9 @@ def compute_regime(
         reduction = total_income - hypothetical_total
         hypo_slab_base = max(0, slab_taxable_income - reduction)
         hypo_slab_tax = slab_tax(hypo_slab_base, slabs)
-        hypo_slab_tax = apply_87a_rebate(hypo_slab_tax, hypothetical_total, regime_rules)
+        hypo_slab_tax = apply_87a_rebate(
+            hypo_slab_tax, hypothetical_total, regime_rules, profile.is_resident
+        )
         return hypo_slab_tax + cg_tax.tax
 
     # Income (not tax) that the surcharge clauses strip out when testing the 25%/37%

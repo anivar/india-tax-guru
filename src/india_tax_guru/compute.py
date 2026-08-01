@@ -28,13 +28,22 @@ from .models import AgeBand
 from .rules.base import RegimeRules, SlabBracket
 
 
-def slabs_for_age(regime_rules: RegimeRules, age_band: AgeBand) -> tuple[SlabBracket, ...]:
+def slabs_for_age(
+    regime_rules: RegimeRules, age_band: AgeBand, is_resident: bool = True
+) -> tuple[SlabBracket, ...]:
     """Resolve the slab structure for a taxpayer's age band.
+
+    The raised basic exemption at 60 and 80 is available only to a RESIDENT individual —
+    a non-resident of any age is taxed from the ordinary threshold. Applying the age
+    concession on age alone hands a 62-year-old non-resident an extra 50,000 of exempt
+    income they are not entitled to.
 
     A regime with no age concession leaves `slabs_senior`/`slabs_super_senior` as None,
     which falls back to the standard slabs — expressed explicitly so that a future age
     concession cannot be half-applied by omission.
     """
+    if not is_resident:
+        return regime_rules.slabs
     is_senior = age_band in (AgeBand.SENIOR_60_80, AgeBand.SUPER_SENIOR_80_PLUS)
     if age_band == AgeBand.SUPER_SENIOR_80_PLUS and regime_rules.slabs_super_senior:
         return regime_rules.slabs_super_senior
@@ -73,13 +82,20 @@ def apply_87a_rebate(
     tax_on_slab_income: int,
     total_income: int,
     regime_rules: RegimeRules,
+    is_resident: bool = True,
 ) -> int:
     """Tax on slab income after s.87A rebate. Never negative.
+
+    The rebate is confined to a RESIDENT individual. A non-resident pays the full slab
+    tax however low their income, so granting it on income alone can wipe out a real
+    liability entirely.
 
     The rebate is applied only to slab-rate tax — tax on s.111A/112A gains is not
     rebatable, so the caller must pass slab-rate tax alone and add special-rate tax
     afterwards.
     """
+    if not is_resident:
+        return tax_on_slab_income
     if total_income <= regime_rules.rebate_87a_income_limit:
         rebate = min(tax_on_slab_income, regime_rules.rebate_87a_max_amount)
         return max(0, tax_on_slab_income - rebate)
