@@ -81,12 +81,8 @@ def test_no_business_income_still_gets_the_salaried_guidance(rules):
         assert "No Form 10-IEA is required" in compliance[0].rationale
 
 
-def test_huf_presumptive_is_permitted_by_44ad_even_though_the_engine_refuses_huf():
-    """s.44AD admits an HUF; the engine's own HUF limitation is a separate matter.
-
-    The presumptive module must not inherit the engine's assessee restriction, or it
-    would misreport the law.
-    """
+def test_huf_presumptive_is_permitted_by_44ad():
+    """s.44AD admits a resident HUF by name, unlike s.44ADA which excludes it."""
     result = compute_44ad(
         turnover=1_000_000,
         digital_receipts=1_000_000,

@@ -31,7 +31,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 
 from .compliance import regime_choice_guidance
-from .models import Regime, SalaryComponent, SalaryIncome, TaxpayerProfile
+from .models import AssesseeType, Regime, SalaryComponent, SalaryIncome, TaxpayerProfile
 from .regime import compare_regimes, compute_regime
 from .rules.base import AssessmentYearRules, RegimeRules
 
@@ -171,9 +171,16 @@ def _lever_hra(profile, rules, regime_rules):
     )
 
 
-def _deduction_lever(field_name: str, cap_attr: str, label: str, why: str) -> Lever:
+def _deduction_lever(
+    field_name: str, cap_attr: str, label: str, why: str, *, individual_only: bool = False
+) -> Lever:
     def lever(profile, rules, regime_rules):
         if field_name not in regime_rules.allowed_deductions:
+            return None
+        # An individual-only head must be skipped, not merely found unhelpful: the
+        # mutated profile re-validates on construction and an HUF claiming 80CCD(1B)
+        # is a hard error, so recommending it would crash — and be wrong law anyway.
+        if individual_only and profile.assessee_type != AssesseeType.INDIVIDUAL:
             return None
         cap = getattr(rules, cap_attr)
         current = getattr(profile.deductions, field_name)
@@ -208,6 +215,7 @@ LEVERS: list[Lever] = [
         "section_80ccd_1b_cap",
         "80CCD(1B)",
         "An additional self-contribution to NPS, over and above the 80C limit.",
+        individual_only=True,
     ),
     _deduction_lever(
         "section_80d_self_family",

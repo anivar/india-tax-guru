@@ -78,14 +78,18 @@ and report any figure that two documents disagree on rather than silently pickin
 
 ## Boundaries
 
-- **Individuals only.** HUF, AOP/BOI, firm, LLP and company are each taxed under
-  different rules — an HUF gets no s.87A rebate, no standard deduction and no age
-  concession; a company is outside s.115BAC entirely and has its own rates and MAT.
-  Constructing a profile with any of these raises `UnsupportedAssesseeError` rather
-  than quietly returning an individual's tax. Relay the refusal; don't work around it.
-- **ITR-1 and ITR-2 only.** No business or professional income, and no presumptive
-  taxation under s.44AD or s.44ADA — say so rather than guessing at rules this repo
-  doesn't implement.
+- **Individuals and HUFs only.** AOP/BOI, firm, LLP and company are each taxed under
+  different rules — a firm pays a flat 30% with no regime choice; a company is outside
+  s.115BAC entirely and has its own rates and MAT. Constructing a profile with any of
+  these raises `UnsupportedAssesseeError` rather than quietly returning an individual's
+  tax. Relay the refusal; don't work around it. For an HUF, use
+  `assessee_type="huf"`: the engine then withholds the s.87A rebate, the age
+  concession, salary heads, 80CCD(1B), 80E and s.44ADA, and rejects inputs an HUF
+  cannot have instead of taxing them.
+- **Business income only if presumptive.** s.44AD and s.44ADA are modelled
+  (`presumptive.py`) and flow into the computation as business income; actual
+  (books-based) business profits and the tax-audit machinery are not — say so rather
+  than guessing at rules this repo doesn't implement.
 - This tool does not file returns or talk to the e-filing portal. It produces numbers
   and recommendations for the user (or another tool) to act on.
 - If the assessment year requested has no rules module in

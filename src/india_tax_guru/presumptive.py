@@ -111,6 +111,27 @@ def _assert_eligible_assessee(assessee_type: AssesseeType) -> None:
         )
 
 
+def _assert_eligible_assessee_44ada(assessee_type: AssesseeType) -> None:
+    """s.44ADA is NARROWER than s.44AD: individual or partnership firm only.
+
+    Finance Act 2021 rewrote the opening words to "an assessee, being an individual
+    or a partnership firm other than a limited liability partnership" — an HUF, which
+    s.44AD does admit, has been outside s.44ADA since AY 2021-22. Reusing the 44AD
+    test here would hand an HUF-run profession the 50% presumptive rate it lost.
+    """
+    if assessee_type not in (AssesseeType.INDIVIDUAL, AssesseeType.FIRM):
+        detail = (
+            "an HUF was eligible only up to AY 2020-21; Finance Act 2021 confined the "
+            "section to a resident individual or partnership firm (not an LLP)"
+            if assessee_type == AssesseeType.HUF
+            else "the section admits only a resident individual or a partnership firm "
+            "other than an LLP"
+        )
+        raise PresumptiveIneligible(
+            f"{assessee_type!s} is not an eligible assessee under s.44ADA — {detail}."
+        )
+
+
 def compute_44ad(
     turnover: int,
     digital_receipts: int,
@@ -235,7 +256,7 @@ def compute_44ada(
     Unlike s.44AD there is no split rate and no five-year lock-in; the cash-receipt test
     governs only the enhanced receipts cap.
     """
-    _assert_eligible_assessee(assessee_type)
+    _assert_eligible_assessee_44ada(assessee_type)
     if not is_resident:
         raise PresumptiveIneligible("s.44ADA is available only to a RESIDENT assessee.")
     if profession not in SECTION_44ADA_PROFESSIONS:

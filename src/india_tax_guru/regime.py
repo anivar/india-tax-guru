@@ -38,7 +38,7 @@ from .compute import (
     slabs_for_age,
 )
 from .interest import compute_advance_tax_interest
-from .models import Regime, TaxpayerProfile
+from .models import AssesseeType, Regime, TaxpayerProfile
 from .rules.base import AssessmentYearRules, RegimeRules
 
 
@@ -128,8 +128,11 @@ def compute_regime(
     total_income = round_288b(slab_taxable_income + special_rate_gains, rules.rounding_unit)
 
     tax_on_slab = slab_tax(slab_taxable_income, slabs)
+    # s.87A reaches only a resident INDIVIDUAL — an HUF gets no rebate however low
+    # its income, which is one of the ways its computation genuinely differs.
+    is_individual = profile.assessee_type == AssesseeType.INDIVIDUAL
     tax_after_rebate = apply_87a_rebate(
-        tax_on_slab, total_income, regime_rules, profile.is_resident
+        tax_on_slab, total_income, regime_rules, profile.is_resident, is_individual
     )
     rebate = tax_on_slab - tax_after_rebate
 
@@ -155,7 +158,8 @@ def compute_regime(
         hypo_slab_base = max(0, slab_taxable_income - reduction)
         hypo_slab_tax = slab_tax(hypo_slab_base, slabs)
         hypo_slab_tax = apply_87a_rebate(
-            hypo_slab_tax, hypothetical_total, regime_rules, profile.is_resident
+            hypo_slab_tax, hypothetical_total, regime_rules, profile.is_resident,
+            is_individual,
         )
         return hypo_slab_tax + cg_tax.tax
 

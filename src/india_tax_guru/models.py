@@ -19,10 +19,10 @@ class AgeBand(StrEnum):
 class AssesseeType(StrEnum):
     """Class of person being assessed.
 
-    Only INDIVIDUAL is implemented. The others are named rather than omitted so that
-    supplying one produces a refusal instead of an individual's tax computed on an
-    HUF's or a company's figures — the reliefs differ enough that the answer would be
-    wrong without anything looking wrong.
+    INDIVIDUAL and HUF are implemented. The others are named rather than omitted so
+    that supplying one produces a refusal instead of an individual's tax computed on
+    a firm's or a company's figures — the reliefs differ enough that the answer would
+    be wrong without anything looking wrong.
     """
 
     INDIVIDUAL = "individual"
@@ -39,15 +39,6 @@ class UnsupportedAssesseeError(NotImplementedError):
 
 #: Why each unsupported class cannot borrow the individual computation.
 _UNSUPPORTED_REASONS: dict[str, str] = {
-    AssesseeType.HUF: (
-        "An HUF is taxed differently from an individual in at least these ways: the "
-        "s.87A rebate is available only to a resident INDIVIDUAL; the s.16(ia) standard "
-        "deduction presupposes salary income, which an HUF cannot have; the raised basic "
-        "exemption at 60 and 80 is an individual's age concession and has no HUF "
-        "equivalent; s.80CCD (NPS) is confined to individuals; and HRA under s.10(13A) "
-        "again presupposes salary. Computing an HUF as an individual would silently grant "
-        "several of these."
-    ),
     AssesseeType.AOP_BOI: (
         "An AOP or BOI is charged under its own paragraph of the Finance Act, with rules "
         "turning on whether the members' shares are determinate and on the members' own "
@@ -71,14 +62,14 @@ _UNSUPPORTED_REASONS: dict[str, str] = {
 
 
 def assert_supported(assessee_type: "AssesseeType") -> None:
-    if assessee_type == AssesseeType.INDIVIDUAL:
+    if assessee_type in (AssesseeType.INDIVIDUAL, AssesseeType.HUF):
         return
     reason = _UNSUPPORTED_REASONS.get(
-        assessee_type, "This engine implements the individual computation only."
+        assessee_type, "This engine implements the individual and HUF computations only."
     )
     raise UnsupportedAssesseeError(
         f"assessee_type={assessee_type!s} is not supported. {reason} "
-        "This engine covers resident and non-resident INDIVIDUALS filing ITR-1 or ITR-2."
+        "This engine covers INDIVIDUALS and HUFs filing ITR-1 through ITR-4."
     )
 
 
@@ -302,3 +293,43 @@ class TaxpayerProfile:
         self.age_band = AgeBand(self.age_band)
         self.assessee_type = AssesseeType(self.assessee_type)
         assert_supported(self.assessee_type)
+        if self.assessee_type == AssesseeType.HUF:
+            self._validate_huf()
+
+    def _validate_huf(self) -> None:
+        """Reject inputs an HUF cannot legally have, rather than silently taxing them.
+
+        Each of these would otherwise flow through the individual machinery and hand
+        the HUF a relief it is not entitled to — with nothing in the output looking
+        wrong. What IS available to an HUF needs no gating here: 80C, 80D (premium on
+        members' health), 80TTA (which extends to HUFs, at the same 10,000 cap), 80DDB
+        (a dependent member's treatment), 80G, s.44AD, and the s.115BAC regime choice
+        with its Form 10-IEA machinery all apply as-is.
+        """
+        problems: list[str] = []
+        if self.salaries:
+            problems.append(
+                "salary income — an HUF cannot hold an office of employment, so s.15 "
+                "salary (and with it the s.16(ia) standard deduction and s.10(13A) HRA) "
+                "cannot arise to it; remuneration from a family business is PGBP or the "
+                "karta's own salary, not the HUF's"
+            )
+        if self.age_band != AgeBand.BELOW_60:
+            problems.append(
+                "a senior age band — the raised basic exemption at 60 and 80 is an "
+                "individual's age concession; an HUF has no age, so age_band must be "
+                "left at below_60 (the karta's age is irrelevant)"
+            )
+        if self.deductions.section_80ccd_1b:
+            problems.append(
+                "s.80CCD(1B) — NPS deductions are confined to individuals; an HUF "
+                "cannot hold an NPS account"
+            )
+        if self.deductions.section_80e_education_loan_interest:
+            problems.append(
+                "s.80E — education-loan interest is deductible only to an individual"
+            )
+        if problems:
+            raise ValueError(
+                "An HUF profile cannot include " + "; ".join(problems) + "."
+            )

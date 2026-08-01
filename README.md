@@ -62,15 +62,20 @@ are documented in the module that handles them.
 - **Regime-choice compliance** — Form 10-IEA only where business income makes it
   necessary, and the s.139(1) deadline that decides whether the old regime is
   available at all.
+- **HUF assessees** — the individual machinery minus the reliefs an HUF cannot
+  claim: no s.87A rebate, no age-based exemption, no salary heads, no 80CCD(1B)
+  or 80E, and no s.44ADA (individuals and firms only since Finance Act 2021).
+  Illegal inputs — an HUF with salary income, a senior age band, or an NPS
+  deduction — are rejected at construction rather than silently taxed.
 
 ## Not implemented — and why
 
-- **Anyone but an individual.** HUF, AOP/BOI, firm, LLP and company are each taxed
-  under different rules — an HUF gets no s.87A rebate, no s.16(ia) standard deduction
-  and no age concession; a company sits outside s.115BAC entirely, with its own rates
-  and minimum alternate tax. Constructing a profile with any of these raises
-  `UnsupportedAssesseeError` rather than quietly handing back an individual's tax,
-  because that wrong answer would look completely ordinary.
+- **Anyone but an individual or HUF.** AOP/BOI, firm, LLP and company are each taxed
+  under different rules — a firm pays a flat 30% with no regime choice; a company sits
+  outside s.115BAC entirely, with its own rates and minimum alternate tax. Constructing
+  a profile with any of these raises `UnsupportedAssesseeError` rather than quietly
+  handing back an individual's tax, because that wrong answer would look completely
+  ordinary.
 - Actual (non-presumptive) business income, and the tax-audit machinery.
 - Foreign income and foreign assets (Schedule FA), cross-border RSU/ESOP tax.
 - Pre-construction home-loan interest amortisation.

@@ -83,18 +83,20 @@ def apply_87a_rebate(
     total_income: int,
     regime_rules: RegimeRules,
     is_resident: bool = True,
+    is_individual: bool = True,
 ) -> int:
     """Tax on slab income after s.87A rebate. Never negative.
 
-    The rebate is confined to a RESIDENT individual. A non-resident pays the full slab
-    tax however low their income, so granting it on income alone can wipe out a real
-    liability entirely.
+    The rebate is confined to a RESIDENT INDIVIDUAL — both words carry weight. A
+    non-resident pays the full slab tax however low their income, and so does an HUF:
+    s.87A opens with "an assessee, being an individual resident in India". Granting it
+    on income alone can wipe out a real liability entirely.
 
     The rebate is applied only to slab-rate tax — tax on s.111A/112A gains is not
     rebatable, so the caller must pass slab-rate tax alone and add special-rate tax
     afterwards.
     """
-    if not is_resident:
+    if not is_resident or not is_individual:
         return tax_on_slab_income
     if total_income <= regime_rules.rebate_87a_income_limit:
         rebate = min(tax_on_slab_income, regime_rules.rebate_87a_max_amount)
