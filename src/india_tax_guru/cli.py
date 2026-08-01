@@ -4,6 +4,7 @@ regime comparison, or a CTC-optimization input.
 
 import json
 from dataclasses import asdict
+from datetime import date
 
 import click
 
@@ -26,6 +27,17 @@ from .restructuring import CTCOptimizationInput, optimize_ctc_split
 from .rules import available_years, get_rules
 
 
+def _gain_from_dict(g: dict) -> CapitalGainLot:
+    # JSON carries dates as ISO strings; the model wants date objects — and the
+    # dates matter, since supplying both makes the engine derive the long-term
+    # classification instead of trusting the caller's flag.
+    g = dict(g)
+    for key in ("acquired_on", "transferred_on"):
+        if isinstance(g.get(key), str):
+            g[key] = date.fromisoformat(g[key])
+    return CapitalGainLot(**g)
+
+
 def _profile_from_dict(d: dict) -> TaxpayerProfile:
     salaries = [
         SalaryIncome(
@@ -45,7 +57,7 @@ def _profile_from_dict(d: dict) -> TaxpayerProfile:
         is_resident=d.get("is_resident", True),
         salaries=salaries,
         house_properties=[HouseProperty(**h) for h in d.get("house_properties", [])],
-        capital_gains=[CapitalGainLot(**g) for g in d.get("capital_gains", [])],
+        capital_gains=[_gain_from_dict(g) for g in d.get("capital_gains", [])],
         business_income=d.get("business_income", 0),
         other_income=OtherIncome(**d.get("other_income", {})),
         deductions=Deductions(**d.get("deductions", {})),
@@ -92,6 +104,23 @@ def _print_regime(r: RegimeResult) -> None:
         click.echo(f"  note: {note}")
 
 
+def _load(profile_json: str):
+    """Load a profile and its rules, converting refusals into clean CLI errors.
+
+    A refusal (unsupported assessee, an HUF with salary income, a year with no
+    rules module) is a first-class answer, not a crash — it must reach the caller
+    as its message, not as a traceback an agent might paste or try to code around.
+    """
+    with open(profile_json) as f:
+        data = json.load(f)
+    try:
+        profile = _profile_from_dict(data)
+        rules = get_rules(profile.assessment_year)
+    except (NotImplementedError, ValueError, KeyError) as e:
+        raise click.ClickException(str(e)) from e
+    return profile, rules
+
+
 @click.group()
 def main():
     """india-tax-guru: India income-tax planning and filing support."""
@@ -108,10 +137,7 @@ def years_cmd():
 @click.argument("profile_json", type=click.Path(exists=True))
 def compare_cmd(profile_json: str):
     """Compare old vs new regime tax for a taxpayer profile JSON file."""
-    with open(profile_json) as f:
-        data = json.load(f)
-    profile = _profile_from_dict(data)
-    rules = get_rules(profile.assessment_year)
+    profile, rules = _load(profile_json)
     result = compare_regimes(profile, rules)
 
     click.echo(f"AY {profile.assessment_year}")
@@ -134,10 +160,7 @@ def compare_cmd(profile_json: str):
 @click.argument("profile_json", type=click.Path(exists=True))
 def advise_cmd(profile_json: str):
     """Expert salary-structure advice: what to change and what each change is worth."""
-    with open(profile_json) as f:
-        data = json.load(f)
-    profile = _profile_from_dict(data)
-    rules = get_rules(profile.assessment_year)
+    profile, rules = _load(profile_json)
     advice = analyse_salary_structure(profile, rules)
 
     click.echo(f"AY {profile.assessment_year}")

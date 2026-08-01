@@ -5,7 +5,26 @@ description = "Open-source India income-tax planning, salary-structuring, and IT
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+authors = [{ name = "Anivar Aravind", email = "anivar.aravind@gmail.com" }]
+keywords = [
+    "india", "income-tax", "itr", "tax-planning", "salary-structuring",
+    "capital-gains", "hra", "presumptive", "44ad", "gst", "huf",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/anivar/india-tax-guru"
+Changelog = "https://github.com/anivar/india-tax-guru/blob/main/CHANGELOG.md"
+Issues = "https://github.com/anivar/india-tax-guru/issues"
 
 [project.optional-dependencies]
 cli = [

@@ -76,6 +76,21 @@ concern the *deductor*, not a salaried filer's own return.
 Maps to: `salaries[].components`, `salaries[].professional_tax_paid`, `deductions`,
 `taxes_paid.tds_salary`.
 
+### GST returns (GSTR-1 / GSTR-3B / CMP-08) — presumptive filers
+
+For a GST-registered s.44AD/44ADA filer, pull the year's aggregate **taxable value
+of outward supplies** and the **tax collected** from GSTR-1/GSTR-3B (a composition
+dealer's turnover comes from CMP-08, with no tax collected on invoices). Run
+`gst.reconcile_gst_turnover(itr_turnover, gst_taxable_value, gst_collected)` before
+any presumptive computation and relay its warnings verbatim. The invoice total is
+not the ITR turnover: presumptive income is computed on the GST-exclusive taxable
+value, and the AIS will display the GSTR-sourced figure, so an on-portal "mismatch"
+against a correctly-filed return is explainable rather than wrong.
+
+Maps to: the `turnover`/`gross_receipts` arguments of
+`presumptive.compute_44ad`/`compute_44ada`, whose result goes into
+`business_income`.
+
 ## Reconciliation — do this before trusting anything
 
 Run these and report the result. They catch most extraction errors:

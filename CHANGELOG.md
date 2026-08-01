@@ -43,26 +43,6 @@ refuse.
   been granted the 50% presumptive rate it lost. The advisory's 80CCD(1B) lever is
   likewise now individual-only.
 
-- **GST-turnover reconciliation for presumptive filers** (`gst.py`). Classifies the
-  ITR-vs-GSTR relationship the way the AIS cross-match does: matched (with declared
-  exempt/non-GST/pre-registration receipts), GST-inclusive turnover (the
-  copy-the-invoice-total error — overstates presumptive income by the tax collected,
-  yet produces a clean AIS match), under-reported (the e-verification pattern), or
-  unexplained excess. The s.44AD/44ADA docstrings now state the GST-exclusive
-  turnover convention explicitly.
-
-- **HUF assessees supported.** The individual machinery minus the individual-only
-  reliefs: no s.87A rebate (including its new-regime marginal relief), no age-based
-  basic exemption, no salary heads (and so no s.16 standard deduction or HRA), no
-  80CCD(1B) or 80E. What remains applies unchanged: slabs, surcharge, cess, 80C,
-  80D, 80TTA at its ₹10,000 cap, 80DDB, 80G, s.44AD, and the s.115BAC regime choice
-  with Form 10-IEA. Illegal HUF inputs are rejected at construction.
-- **Fixed: s.44ADA wrongly admitted an HUF.** The eligibility test was shared with
-  s.44AD, but Finance Act 2021 confined s.44ADA to a resident individual or
-  partnership firm (not an LLP) from AY 2021-22 — an HUF-run profession would have
-  been granted the 50% presumptive rate it lost. The advisory's 80CCD(1B) lever is
-  likewise now individual-only.
-
 ## v0.1.0 — initial release
 
 Deterministic India income-tax engine for ITR-1 and ITR-2 profiles, with

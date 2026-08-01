@@ -1,0 +1,35 @@
+name: Publish to PyPI
+
+# Trusted Publishing: authorize this workflow once at
+# https://pypi.org/manage/account/publishing/ (project: india-tax-guru,
+# owner: anivar, repo: india-tax-guru, workflow: publish.yml,
+# environment: pypi). No API token is stored anywhere.
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1

@@ -1,8 +1,10 @@
 # india-tax-guru
 
 [![CI](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/anivar/india-tax-guru)](https://github.com/anivar/india-tax-guru/releases)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Install with skills.sh](https://img.shields.io/badge/skills.sh-npx%20skills%20add%20anivar%2Findia--tax--guru-blue)](https://skills.sh/anivar)
+[![Install with skills.sh](https://img.shields.io/badge/skills.sh-npx%20skills%20add%20anivar%2Findia--tax--guru-blue)](https://skills.sh/anivar/india-tax-guru)
 
 Open-source India income-tax **planning, salary-structuring, and ITR-filing
 support** toolkit. Library + CLI, usable standalone or as an agent skill
@@ -83,7 +85,10 @@ are documented in the module that handles them.
   handing back an individual's tax, because that wrong answer would look completely
   ordinary.
 - Actual (non-presumptive) business income, and the tax-audit machinery.
-- Foreign income and foreign assets (Schedule FA), cross-border RSU/ESOP tax.
+- Foreign income and foreign assets: Schedule FA disclosure, DTAA relief and
+  foreign tax credit, and the vesting-stage perquisite taxation of RSUs/ESOPs.
+  (The *sale* gain of foreign-listed stock IS modelled — see `foreign_equity`
+  above; it is everything around it that is not.)
 - Pre-construction home-loan interest amortisation.
 - Capital-loss carry-forward across years — this is a single-year computation.
 - s.234C's carve-out for gains arising after an instalment due date, which needs
@@ -132,17 +137,46 @@ not editing old ones — so last year's numbers can never regress.
 
 ## Install
 
+**As an agent skill** (Claude Code or any AGENTS.md-compatible agent) — the
+main way to use this:
+
 ```bash
-uv sync
+npx skills add anivar/india-tax-guru
+```
+
+**As a CLI**, installed once and on your PATH:
+
+```bash
+uv tool install "india-tax-guru[cli] @ git+https://github.com/anivar/india-tax-guru"
+itg years
+```
+
+**As a library** in your project:
+
+```bash
+uv add "india-tax-guru @ git+https://github.com/anivar/india-tax-guru"
+# or: pip install "india-tax-guru @ git+https://github.com/anivar/india-tax-guru"
+```
+
+The library has zero runtime dependencies; `click` is pulled in only by the
+`[cli]` extra.
+
+**From a clone** (development):
+
+```bash
+uv sync --group dev
 uv run itg years
 ```
 
 ## Usage
 
 ```bash
-uv run itg compare path/to/profile.json
-uv run itg optimize-ctc path/to/ctc_input.json
+itg compare path/to/profile.json     # old vs new regime, full breakdown
+itg advise path/to/profile.json      # what to change and what it's worth
+itg optimize-ctc path/to/ctc_input.json
 ```
+
+(Prefix with `uv run` when working from a clone.)
 
 See `docs/profile_schema.md` for the input JSON shape, or use the library
 directly:

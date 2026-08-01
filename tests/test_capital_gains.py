@@ -140,3 +140,48 @@ def test_every_asset_class_is_handled(asset_class, rules):
     buckets = bucket_capital_gains([lot(asset_class, True, 1_000_000)])
     total = buckets.equity_stcg + buckets.equity_ltcg + buckets.other_stcg + buckets.other_ltcg
     assert total == 1_000_000
+
+
+def test_reclassification_by_dates_is_surfaced_as_a_note():
+    """A corrected input is still a surprise — the override must be reported.
+
+    38 months of holding on foreign equity is long-term (threshold 24), so the
+    caller's short-term flag is overridden AND the correction appears in notes.
+    """
+    from datetime import date
+
+    corrected = CapitalGainLot(
+        asset_class=AssetClass.FOREIGN_EQUITY,
+        is_long_term=False,
+        gain=400_000,
+        acquired_on=date(2022, 7, 1),
+        transferred_on=date(2025, 9, 1),
+    )
+    assert corrected.is_long_term
+    assert corrected.reclassified
+    buckets = bucket_capital_gains([corrected])
+    assert any("reclassified" in n for n in buckets.notes)
+
+
+def test_s50aa_deeming_is_surfaced_as_a_note():
+    """specified_mf claimed long-term is forced short-term and the note says why."""
+    deemed = lot(AssetClass.SPECIFIED_MF, True, 200_000)
+    assert deemed.reclassified
+    buckets = bucket_capital_gains([deemed])
+    assert any("50AA" in n for n in buckets.notes)
+
+
+def test_a_confirmed_classification_produces_no_reclassification_note():
+    """Dates that AGREE with the caller's flag must not generate noise."""
+    from datetime import date
+
+    confirmed = CapitalGainLot(
+        asset_class=AssetClass.EQUITY_LISTED,
+        is_long_term=True,
+        gain=100_000,
+        acquired_on=date(2023, 1, 1),
+        transferred_on=date(2025, 6, 1),
+    )
+    assert not confirmed.reclassified
+    buckets = bucket_capital_gains([confirmed])
+    assert not any("reclassified" in n for n in buckets.notes)

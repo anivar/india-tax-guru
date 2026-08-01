@@ -1,0 +1,28 @@
+{
+  "assessment_year": "2026-27",
+  "assessee_type": "huf",
+  "is_resident": true,
+
+  "house_properties": [
+    {"is_self_occupied": false, "annual_rent_received": 480000,
+     "municipal_taxes_paid": 24000, "home_loan_interest": 150000}
+  ],
+
+  "business_income": 600000,
+
+  "other_income": {
+    "savings_bank_interest": 30000,
+    "fd_interest": 120000
+  },
+
+  "deductions": {
+    "section_80c": 150000,
+    "section_80d_self_family": 25000,
+    "section_80tta_or_ttb": 30000
+  },
+
+  "taxes_paid": {
+    "tds_other": 12000,
+    "advance_tax": 40000
+  }
+}

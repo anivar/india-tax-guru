@@ -157,6 +157,11 @@ def compute_44ad(
     not turnover, and feeding a GST-inclusive figure both overstates presumptive
     income and can flip the cap test near the threshold. Reconcile against the GSTR
     figures with `gst.reconcile_gst_turnover` before computing.
+
+    `basic_exemption_limit` defaults to 4,00,000 — the NEW-regime figure for
+    AY 2026-27. It is year- and regime-dependent; pass the actual limit for the
+    taxpayer's year and regime (the old regime's is 2,50,000) or the books/audit
+    consequence of declaring below the presumptive rate may be mis-stated.
     """
     _assert_eligible_assessee(assessee_type)
     if not is_resident:
@@ -265,6 +270,8 @@ def compute_44ada(
     As with s.44AD, `gross_receipts` must be EXCLUSIVE of GST for a registered
     professional — at 50%, counting the tax collected as receipts overstates income
     by half the GST component. See `gst.reconcile_gst_turnover`.
+
+    `basic_exemption_limit` is year- and regime-dependent, as on `compute_44ad`.
     """
     _assert_eligible_assessee_44ada(assessee_type)
     if not is_resident:

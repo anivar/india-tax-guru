@@ -52,6 +52,22 @@ def bucket_capital_gains(lots: list[CapitalGainLot]) -> CapitalGainBuckets:
 
     notes: list[str] = []
 
+    # A corrected input is still a surprise: say so rather than silently taxing the
+    # right way while the caller believes the wrong classification stood.
+    for lot in lots:
+        if lot.reclassified:
+            reason = (
+                "s.50AA deems this asset class short-term regardless of holding period"
+                if not lot.acquired_on or not lot.transferred_on
+                else f"the holding period derived from its dates is "
+                f"{lot.held_for_months()} months"
+            )
+            notes.append(
+                f"A {lot.asset_class} lot supplied as "
+                f"{'long' if not lot.is_long_term else 'short'}-term was reclassified "
+                f"to {'long' if lot.is_long_term else 'short'}-term: {reason}."
+            )
+
     def _consume(loss: int, pools: dict[str, int], order: list[str]) -> int:
         for key in order:
             if loss <= 0:

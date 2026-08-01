@@ -1,14 +1,18 @@
 # india-tax-guru — Agent Guide
 
 > For AI agents/LLMs using this repo as a tool: computation engine for India
-> income-tax planning, salary/CTC restructuring, and ITR-1/2 filing support.
+> income-tax planning, salary/CTC restructuring, and ITR filing support.
 > See `SKILL.md` for the Claude Code skill manifest; this file is the
 > tool-agnostic version for any AGENTS.md-compatible agent.
 
-**Scope:** ITR-1/ITR-2 (salaried + capital gains/house property), any
+**Scope:** individuals and HUFs — salaried income, capital gains (including
+foreign-listed equity), house property, presumptive business/professional
+income under s.44AD/44ADA (with GST-turnover reconciliation), for any
 assessment year with a rules module under `src/india_tax_guru/rules/`.
-**Not in scope:** ITR-3/4 (business income), PDF/OCR parsing, e-filing
-automation, cross-year loss carry-forward. See README "Not implemented".
+**Not in scope:** firms/LLPs/companies/AOP-BOI (refused with
+`UnsupportedAssesseeError`), books-based business income and the tax-audit
+machinery, PDF/OCR parsing, e-filing automation, cross-year loss
+carry-forward. See README "Not implemented".
 
 ## Install
 
@@ -21,8 +25,11 @@ uv sync
 | Task | Command / entry point |
 |---|---|
 | Compare old vs new regime | `uv run itg compare <profile.json>` |
+| Salary-structure advisory | `uv run itg advise <profile.json>` |
 | Optimize CTC split | `uv run itg optimize-ctc <ctc_input.json>` |
 | List supported years | `uv run itg years` |
+| Presumptive income (s.44AD/44ADA) | `india_tax_guru.presumptive.compute_44ad` / `compute_44ada` — feed the result into `profile.business_income` |
+| GST-turnover reconciliation | `india_tax_guru.gst.reconcile_gst_turnover` — run BEFORE computing for a GST-registered presumptive filer |
 | Payslip reconciliation | `india_tax_guru.payslip.analyze_payslips` / `reconcile_against_form16` (library only) |
 | Advance-tax interest | computed inside `compute_regime` when `taxes_paid.advance_tax_by_checkpoint` is supplied; also callable directly from `india_tax_guru.interest` |
 
@@ -33,7 +40,8 @@ Input JSON shape: `docs/profile_schema.md`. Examples: `docs/examples/*.json`.
 1. **Never guess a tax figure.** Every number the engine returns traces to a
    function in `src/india_tax_guru/`; don't hand-compute a workaround when a
    module already exists (`salary.py`, `capital_gains.py`, `house_property.py`,
-   `deductions.py`, `compute.py`, `regime.py`, `interest.py`, `restructuring.py`).
+   `deductions.py`, `compute.py`, `regime.py`, `interest.py`, `restructuring.py`,
+   `presumptive.py`, `gst.py`, `advisory.py`, `compliance.py`, `payslip.py`).
 2. **Surface `RegimeResult.notes` verbatim.** It aggregates every disallowance,
    statutory cap and unmodelled simplification that changed the number.
    Dropping it when reporting to a user is a correctness bug, not a style

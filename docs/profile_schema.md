@@ -6,7 +6,9 @@
 {
   "assessment_year": "2026-27",   // must match a module in src/india_tax_guru/rules/
   "age_band": "below_60",         // below_60 | senior_60_80 | super_senior_80_plus
-  "is_resident": true,            // non-residents cannot set basic exemption off against gains
+  "is_resident": true,            // non-residents lose s.87A, the age concession, and the gains set-off
+  "assessee_type": "individual",  // individual (default) | huf — anything else refuses
+  "business_income": 0,           // PGBP at slab rates; feed compute_44ad/44ada output here
 
   "salaries": [
     {
@@ -37,7 +39,9 @@
   "capital_gains": [
     {"asset_class": "equity_mf", "is_long_term": true, "gain": 300000},
     {"asset_class": "equity_listed", "is_long_term": false, "gain": -50000},
-    {"asset_class": "specified_mf", "is_long_term": true, "gain": 200000}
+    {"asset_class": "specified_mf", "is_long_term": true, "gain": 200000},
+    {"asset_class": "foreign_equity", "gain": 400000,
+     "acquired_on": "2023-05-10", "transferred_on": "2025-09-01"}
   ],
 
   "other_income": {
@@ -84,11 +88,31 @@ Periods that do not add up to twelve months are allowed but produce a warning.
 Anything above the cap stays taxable. Do not also list it as a component or it
 will be counted twice.
 
-**`asset_class`** — one of `equity_listed`, `equity_mf`, `specified_mf`,
-`debt_mf_legacy`, `unlisted_equity`, `property`, `gold`, `other`.
-`specified_mf` (debt-oriented funds acquired on or after 1 April 2023) is
-forced short-term by s.50AA whatever `is_long_term` says, and is taxed at slab
-rates rather than 12.5%.
+**`assessee_type`** — `individual` (default) or `huf`. An HUF profile must have
+no salaries, `age_band` left at `below_60` (an HUF has no age; the karta's is
+irrelevant), and no 80CCD(1B) or 80E — each is rejected at construction. The
+engine then withholds the s.87A rebate automatically. Any other assessee type
+raises `UnsupportedAssesseeError`.
+
+**`business_income`** — income under the head Profits and Gains of Business or
+Profession, taxed at slab rates. For a presumptive filer, compute it with
+`presumptive.compute_44ad` / `compute_44ada` (GST-registered? reconcile turnover
+with `gst.reconcile_gst_turnover` first) and put the declared income here. Any
+non-zero value makes this an ITR-3/ITR-4 return and, if the old regime is
+chosen, triggers the Form 10-IEA obligation.
+
+**`asset_class`** — one of `equity_listed`, `equity_mf`, `foreign_equity`,
+`specified_mf`, `debt_mf_legacy`, `unlisted_equity`, `property`, `gold`,
+`other`. `specified_mf` (debt-oriented funds acquired on or after 1 April 2023)
+is forced short-term by s.50AA whatever `is_long_term` says, and is taxed at
+slab rates rather than 12.5%. `foreign_equity` (a US-listed RSU, say) gets no
+s.111A/112A treatment — no ₹1,25,000 exemption, no concessional rate, and a
+24-month long-term threshold.
+
+**`acquired_on` / `transferred_on`** — optional ISO dates on a capital-gain
+lot. Supply BOTH and the engine derives the long-term classification from the
+holding period instead of trusting `is_long_term` — worth doing for foreign
+stock, where the 24-month threshold is exactly what people misjudge.
 
 **`section_80g_deductible`** — supply the amount already reduced by the 50% or
 100% rate for that donee. The 10%-of-gross-total-income qualifying limit is
@@ -101,6 +125,13 @@ model. It bypasses every statutory limit, so using it emits a warning.
 **`advance_tax_by_checkpoint`** — four cumulative figures as of 15 Jun, 15 Sep,
 15 Dec and 15 Mar. Omit the field entirely to skip s.234B/234C rather than have
 nil interest silently assumed.
+
+**`months_elapsed_for_234b`** — whole months from 1 April of the assessment
+year to the date the balance will actually be paid, counting a part month as a
+whole one. For tax still unpaid, use the intended payment date (filing day,
+typically) — e.g. paying on 20 July is 4 months (Apr, May, Jun, Jul). s.234B
+runs to the date of payment, not the due date, so leaving this at 0 with a
+balance outstanding understates the interest.
 
 ### What comes back
 

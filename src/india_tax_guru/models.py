@@ -182,9 +182,14 @@ class CapitalGainLot:
     gain: int  # may be negative (loss)
     acquired_on: date | None = None
     transferred_on: date | None = None
+    #: True where this engine overrode the caller's `is_long_term` (s.50AA deeming, or
+    #: a classification derived from the dates that contradicted the flag). Downstream
+    #: reporting surfaces this — a silently corrected input is still a surprise.
+    reclassified: bool = False
 
     def __post_init__(self):
         self.asset_class = AssetClass(self.asset_class)
+        claimed = self.is_long_term
         # s.50AA overrides whatever the caller claimed about holding period.
         if self.asset_class in DEEMED_SHORT_TERM_CLASSES:
             self.is_long_term = False
@@ -195,6 +200,7 @@ class CapitalGainLot:
             self.is_long_term = self.held_for_months() >= LONG_TERM_MONTHS.get(
                 self.asset_class, 24
             )
+        self.reclassified = self.is_long_term != claimed
 
     def held_for_months(self) -> int:
         """Whole months between acquisition and transfer. 0 if either date is missing."""
