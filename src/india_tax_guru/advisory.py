@@ -280,10 +280,11 @@ def analyse_salary_structure(
         if cumulative_outcome is not None:
             cumulative = cumulative_outcome[0]
 
+    # Derived from the profile so a presumptive filer cannot silently miss the Form
+    # 10-IEA obligation just because the caller forgot to pass the flag.
+    has_business = has_business_or_professional_income or profile.business_income > 0
     guidance = regime_choice_guidance(
-        profile.assessment_year,
-        regime,
-        has_business_or_professional_income=has_business_or_professional_income,
+        profile.assessment_year, regime, has_business_or_professional_income=has_business
     )
     if guidance is not None:
         recommendations.append(

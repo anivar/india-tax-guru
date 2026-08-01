@@ -92,14 +92,36 @@ class AssetClass(StrEnum):
     taxpayer's marginal rate — a large understatement for a high earner.
     """
 
-    EQUITY_LISTED = "equity_listed"  # s.111A / s.112A eligible (STT paid)
-    EQUITY_MF = "equity_mf"  # s.111A / s.112A eligible
+    EQUITY_LISTED = "equity_listed"  # Indian recognised exchange, STT paid
+    EQUITY_MF = "equity_mf"  # equity-oriented fund, STT paid
+    #: Shares listed OUTSIDE India — a US-listed RSU or ESPP holding, typically. NOT a
+    #: s.112A asset: no STT is paid and a foreign exchange is not a recognised stock
+    #: exchange, so there is no 1,25,000 exemption and no concessional equity rate. The
+    #: charge is under s.112, and the long-term threshold is 24 months rather than 12.
+    #: Kept distinct from EQUITY_LISTED precisely because the obvious choice for someone
+    #: holding foreign stock would otherwise hand them a concession they cannot claim.
+    FOREIGN_EQUITY = "foreign_equity"
     SPECIFIED_MF = "specified_mf"  # s.50AA — always short-term, slab rate
     DEBT_MF_LEGACY = "debt_mf_legacy"  # acquired before 1 Apr 2023
     UNLISTED_EQUITY = "unlisted_equity"
     PROPERTY = "property"
     GOLD = "gold"
     OTHER = "other"
+
+
+#: Months of holding after which a gain is long-term, by asset class. Applies to transfers
+#: on or after 23 July 2024, when Finance (No. 2) Act 2024 collapsed three holding-period
+#: tiers into two: 12 months for any listed security, 24 months for everything else.
+LONG_TERM_MONTHS: dict[str, int] = {
+    AssetClass.EQUITY_LISTED: 12,
+    AssetClass.EQUITY_MF: 12,
+    AssetClass.FOREIGN_EQUITY: 24,
+    AssetClass.DEBT_MF_LEGACY: 24,
+    AssetClass.UNLISTED_EQUITY: 24,
+    AssetClass.PROPERTY: 24,
+    AssetClass.GOLD: 24,
+    AssetClass.OTHER: 24,
+}
 
 
 #: Asset classes eligible for the s.111A / s.112A concessional equity rates.
@@ -175,9 +197,32 @@ class CapitalGainLot:
         # s.50AA overrides whatever the caller claimed about holding period.
         if self.asset_class in DEEMED_SHORT_TERM_CLASSES:
             self.is_long_term = False
+        elif self.acquired_on and self.transferred_on:
+            # Both dates given, so derive the classification rather than trusting the
+            # caller's flag — getting this wrong is the difference between 12.5% and
+            # a marginal rate, and it is exactly what people misjudge on foreign stock.
+            self.is_long_term = self.held_for_months() >= LONG_TERM_MONTHS.get(
+                self.asset_class, 24
+            )
+
+    def held_for_months(self) -> int:
+        """Whole months between acquisition and transfer. 0 if either date is missing."""
+        if not self.acquired_on or not self.transferred_on:
+            return 0
+        months = (self.transferred_on.year - self.acquired_on.year) * 12 + (
+            self.transferred_on.month - self.acquired_on.month
+        )
+        if self.transferred_on.day < self.acquired_on.day:
+            months -= 1
+        return max(0, months)
 
     @property
     def is_equity(self) -> bool:
+        """Eligible for the s.111A/112A concessional equity treatment.
+
+        Deliberately excludes FOREIGN_EQUITY: a foreign-listed share pays no STT and is
+        not traded on a recognised stock exchange in India, so neither section reaches it.
+        """
         return self.asset_class in EQUITY_CLASSES
 
 
@@ -244,6 +289,11 @@ class TaxpayerProfile:
     salaries: list[SalaryIncome] = field(default_factory=list)
     house_properties: list[HouseProperty] = field(default_factory=list)
     capital_gains: list[CapitalGainLot] = field(default_factory=list)
+    #: Income under the head Profits and Gains of Business or Profession, taxed at slab
+    #: rates. Feed the figure from `presumptive.compute_44ad`/`compute_44ada` for a
+    #: presumptive filer. Any non-zero value makes this an ITR-3/ITR-4 return and, if
+    #: the old regime is chosen, triggers the Form 10-IEA obligation.
+    business_income: int = 0
     other_income: OtherIncome = field(default_factory=OtherIncome)
     deductions: Deductions = field(default_factory=Deductions)
     taxes_paid: TaxesPaid = field(default_factory=TaxesPaid)

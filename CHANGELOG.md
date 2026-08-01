@@ -24,6 +24,10 @@ Supports AY 2025-26 and AY 2026-27.
   capped, regime-gated, bounded by gross total income.
 - Settlement: TDS, advance tax and self-assessment tax netted to a refund or
   balance-payable figure, with s.234B/234C interest.
+- Foreign-listed equity as its own asset class: no s.112A exemption, no
+  concessional rate, 24-month long-term threshold.
+- Presumptive taxation under s.44AD and s.44ADA, wired into the computation as
+  business income.
 - s.288A/288B rounding to the nearest ₹10, halves up.
 
 ### Advice and compliance
@@ -60,6 +64,7 @@ are locked in as `tests/test_golden_scenarios.py` and are the suite's oracle.
 
 ### Not in this release
 
-Presumptive taxation under s.44AD and s.44ADA is not implemented. The research
-pass on it did not complete, and the rules were not going to be written from
-memory.
+Actual (non-presumptive) business income and the tax-audit machinery. Assessees
+other than individuals — HUF, AOP/BOI, firm, LLP and company each refuse rather
+than borrowing the individual computation. Document importers, which an agent
+handles instead (`docs/importing.md`).

@@ -33,6 +33,14 @@ are documented in the module that handles them.
 - **Capital gains** — s.111A/112A equity rates, the ₹1,25,000 s.112A exemption,
   s.50AA (specified mutual funds deemed short-term at slab rates), s.70/74
   set-off ordering, and the resident basic-exemption set-off against gains.
+- **Foreign-listed equity** — a US-listed RSU is *not* a s.112A asset. No STT, not a
+  recognised Indian exchange, so no ₹1,25,000 exemption, no concessional rate, and a
+  24-month long-term threshold rather than 12. Held as its own asset class precisely
+  because picking `equity_listed` for it would silently grant all three.
+- **Presumptive taxation** — s.44AD and s.44ADA, including the split rate (6% applies
+  only to the digitally-received slice of turnover, 8% to the rest — it is not an
+  alternative rate on the whole), the ₹3 crore / ₹75 lakh enhanced caps and their 5%
+  cash test, the s.44AD(4) lock-in, and the single 15 March advance-tax instalment.
 - **House property** — s.24(b) and s.71(3A) caps applied in *aggregate* across
   properties, let-out NAV/30%/interest, carry-forward reported not dropped.
 - **Surcharge** — thresholds, the new regime's 25% ceiling, the **15% cap on
@@ -63,8 +71,7 @@ are documented in the module that handles them.
   and minimum alternate tax. Constructing a profile with any of these raises
   `UnsupportedAssesseeError` rather than quietly handing back an individual's tax,
   because that wrong answer would look completely ordinary.
-- ITR-3 / ITR-4 (business and professional income, presumptive taxation under
-  s.44AD/44ADA).
+- Actual (non-presumptive) business income, and the tax-audit machinery.
 - Foreign income and foreign assets (Schedule FA), cross-border RSU/ESOP tax.
 - Pre-construction home-loan interest amortisation.
 - Capital-loss carry-forward across years — this is a single-year computation.

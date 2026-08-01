@@ -50,6 +50,7 @@ class RegimeResult:
     net_salary: int
     house_property: int
     other_income: int
+    business_income: int  # PGBP head, taxed at slab rates
     slab_rate_capital_gains: int  # non-equity short-term, taxed at slab rates
     special_rate_capital_gains: int  # s.111A/112A/112, taxed at flat rates
     gross_total_income: int  # excludes special-rate gains; those are added into total_income
@@ -100,6 +101,7 @@ def compute_regime(
         + house.contribution_to_total_income
         + other_income_total
         + buckets.other_stcg
+        + profile.business_income
     )
 
     ded_result = ded.compute_deductions(
@@ -195,6 +197,7 @@ def compute_regime(
         net_salary=salary.net_salary,
         house_property=house.contribution_to_total_income,
         other_income=other_income_total,
+        business_income=profile.business_income,
         slab_rate_capital_gains=buckets.other_stcg,
         special_rate_capital_gains=special_rate_gains,
         gross_total_income=gross_total_income,
