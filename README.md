@@ -1,10 +1,11 @@
 # india-tax-guru
 
-[![CI](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml/badge.svg)](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/india-tax-guru)](https://pypi.org/project/india-tax-guru/)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](pyproject.toml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Install with skills.sh](https://img.shields.io/badge/skills.sh-npx%20skills%20add%20anivar%2Findia--tax--guru-blue)](https://skills.sh/anivar/india-tax-guru)
+[![CI](https://anivar.net/badge?src=ci&repo=anivar/india-tax-guru)](https://github.com/anivar/india-tax-guru/actions/workflows/ci.yml)
+[![PyPI](https://anivar.net/badge?src=pypi&name=india-tax-guru)](https://pypi.org/project/india-tax-guru/)
+[![Python 3.11+](https://anivar.net/badge?label=python&value=3.11%2B)](pyproject.toml)
+[![License: MIT](https://anivar.net/badge?label=license&value=MIT)](LICENSE)
+[![Install with skills.sh](https://anivar.net/badge?label=skills.sh&value=npx%20skills%20add%20anivar/india-tax-guru)](https://skills.sh/anivar/india-tax-guru)
+[![clones](https://anivar.net/traffic?repo=india-tax-guru&m=clones)](https://github.com/anivar/india-tax-guru/graphs/traffic)
 
 Compute your Indian income tax under **both regimes, always** — and see exactly
 what to change to pay less. A deterministic engine with 247 hand-verified tests,
