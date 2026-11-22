@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- The skill description says when to load it: an individual or HUF asking what Indian income tax they owe, which
+  regime to choose, how to structure pay or how to fill an ITR, even when they only paste a payslip or
+  Form 16.
+- `allowed-tools` is space-separated, as the Agent Skills specification requires. `user-invocable` and
+  `agentic` are removed: claude.ai and the Skills API refuse a skill whose frontmatter has a key outside
+  the specification.
+
 ## v0.2.1
 
 Documentation, packaging and agent-experience hardening after an independent

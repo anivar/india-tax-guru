@@ -1,0 +1,66 @@
+[
+  {
+    "query": "old or new regime this year? CTC 32L, I pay 40k rent in Bangalore",
+    "should_trigger": true
+  },
+  {
+    "query": "sold US RSUs in August, how is that taxed in India and which ITR form do I file",
+    "should_trigger": true
+  },
+  {
+    "query": "freelance designer, about 18L receipts, can I use 44ADA",
+    "should_trigger": true
+  },
+  {
+    "query": "here is my Form 16, why is my refund lower than I expected",
+    "should_trigger": true
+  },
+  {
+    "query": "HR lets me restructure my salary. what split gives me the most take-home",
+    "should_trigger": true
+  },
+  {
+    "query": "got a 234C interest demand, how was it computed",
+    "should_trigger": true
+  },
+  {
+    "query": "my shop's GST turnover doesn't match what I filed in ITR-4",
+    "should_trigger": true
+  },
+  {
+    "query": "how do I file for HUF rental income",
+    "should_trigger": true
+  },
+  {
+    "query": "US federal tax on my W-2 income",
+    "should_trigger": false
+  },
+  {
+    "query": "GST invoice format for export of services",
+    "should_trigger": false
+  },
+  {
+    "query": "UK self assessment deadline this year",
+    "should_trigger": false
+  },
+  {
+    "query": "calculate the EMI for a home loan",
+    "should_trigger": false
+  },
+  {
+    "query": "corporate tax rate for a private limited company in India",
+    "should_trigger": false
+  },
+  {
+    "query": "set up payroll software for a 20 person company",
+    "should_trigger": false
+  },
+  {
+    "query": "transfer pricing documentation for our Singapore subsidiary",
+    "should_trigger": false
+  },
+  {
+    "query": "capital gains tax on shares in Australia",
+    "should_trigger": false
+  }
+]

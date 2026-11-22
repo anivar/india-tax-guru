@@ -1,21 +1,18 @@
 ---
 name: india-tax-guru
 description: >
-  India income-tax planning, salary/CTC restructuring, and ITR-1/2/4
-  filing-support toolkit for individuals and HUFs. Computes old-vs-new regime
-  comparison, HRA/capital-gains/house-property tax, presumptive business and
-  professional income (s.44AD/44ADA), GST-turnover reconciliation for
-  presumptive filers, advance-tax interest (234B/234C), and optimal CTC
-  splits. Triggers on: India income tax, ITR-1/ITR-2/ITR-4, old vs new tax
-  regime, HRA exemption, CTC structuring/salary restructuring, take-home
-  salary, capital gains tax India, US stocks or foreign-listed RSU sale,
-  freelancer or consultant tax India, shop/small-business presumptive tax,
-  44AD, 44ADA, GST turnover vs ITR mismatch, HUF taxation, section 87A
-  rebate, Form 16/payslip reconciliation, Form 10-IEA, or advance tax
-  interest questions.
+  India income-tax planning, salary/CTC restructuring, and ITR-1/2/4 filing-support toolkit for
+  individuals and HUFs. Computes old-vs-new regime comparison, HRA/capital-gains/house-property tax,
+  presumptive business and professional income (s.44AD/44ADA), GST-turnover reconciliation for
+  presumptive filers, advance-tax interest (234B/234C), and optimal CTC splits. Triggers on: India
+  income tax, ITR-1/ITR-2/ITR-4, old vs new tax regime, HRA exemption, CTC structuring/salary
+  restructuring, take-home salary, capital gains tax India, US stocks or foreign-listed RSU sale,
+  freelancer or consultant tax India, shop/small-business presumptive tax, 44AD, 44ADA, GST turnover
+  vs ITR mismatch, HUF taxation, section 87A rebate, Form 16/payslip reconciliation, Form 10-IEA, or
+  advance tax interest questions. Use this skill whenever an individual or HUF asks what Indian
+  income tax they owe, which regime to choose, how to structure pay, or how to fill an ITR, even if
+  they only paste a payslip or Form 16.
 license: MIT
-user-invocable: true
-agentic: true
 compatibility: "Requires Python >=3.11 and uv. CLI: itg. Library: india_tax_guru."
 metadata:
   author: Anivar Aravind
@@ -26,7 +23,7 @@ metadata:
   install: npx skills add anivar/india-tax-guru
   version: 0.2.1
   tags: india, income-tax, itr, itr-1, itr-2, itr-4, tax-planning, salary-structuring, ctc, hra, capital-gains, rsu, foreign-stock, regime-comparison, old-vs-new-regime, presumptive, 44ad, 44ada, gst, gst-reconciliation, huf, form-16, form-10iea, advance-tax, tds, freelancer-tax, e-filing
-allowed-tools: Bash(uv:*), Bash(itg:*)
+allowed-tools: Bash(uv:*) Bash(itg:*)
 ---
 
 # india-tax-guru
