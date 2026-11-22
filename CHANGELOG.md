@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.2.2
 
 - The skill description says when to load it: an individual or HUF asking what Indian income tax they owe, which
   regime to choose, how to structure pay or how to fill an ITR, even when they only paste a payslip or
